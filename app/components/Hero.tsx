@@ -20,9 +20,6 @@ export default function Hero() {
               >
                 Start planning
               </Link>
-              <button className="px-8 py-3 border border-[var(--goose-ink)] text-[var(--goose-ink)] rounded hover:bg-[var(--goose-ink)] hover:text-[var(--goose-cream)] transition-colors">
-                Learn more
-              </button>
             </div>
           </div>
 

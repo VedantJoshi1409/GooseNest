@@ -9,12 +9,6 @@ export default function FeaturesGrid() {
       href: "/degree-planner",
     },
     {
-      category: "Prerequisites",
-      title: "See the full picture",
-      description: "Visualize course dependencies and track your progress.",
-      href: "/prerequisite-tree",
-    },
-    {
       category: "Schedule",
       title: "Plan term by term",
       description: "Organize your courses across all semesters ahead.",
@@ -32,11 +26,11 @@ export default function FeaturesGrid() {
           Everything you need
         </h2>
         <p className="text-lg text-[var(--goose-ink)]">
-          Three tools built for your success
+          Tools built for your success
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 md:gap-8">
         {features.map((feature, index) => (
           <div
             key={feature.href}

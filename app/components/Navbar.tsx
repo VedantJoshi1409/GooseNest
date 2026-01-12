@@ -15,14 +15,8 @@ export default function Navbar() {
             <Link href="/degree-planner" className="text-[var(--goose-ink)] hover:text-[var(--goose-slate)] transition-colors">
               Degree planner
             </Link>
-            <Link href="/prerequisite-tree" className="text-[var(--goose-ink)] hover:text-[var(--goose-slate)] transition-colors">
-              Prerequisite tree
-            </Link>
             <Link href="/schedule-planner" className="text-[var(--goose-ink)] hover:text-[var(--goose-slate)] transition-colors">
               Schedule planner
-            </Link>
-            <Link href="#" className="text-[var(--goose-ink)] hover:text-[var(--goose-slate)] transition-colors">
-              Resources
             </Link>
           </div>
 
