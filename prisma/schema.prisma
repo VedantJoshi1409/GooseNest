@@ -12,3 +12,68 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Faculty {
+  name    String   @id
+  courses Course[]
+}
+
+model Course {
+  code  String @id
+  title String
+
+  facultyName String
+  faculty     Faculty @relation(fields: [facultyName], references: [name])
+
+  prereqs CoursePrereq[] @relation("target")
+  unlocks CoursePrereq[] @relation("source")
+
+  courseGroups CourseGroupLink[]
+}
+
+model CoursePrereq {
+  courseCode String
+  prereqCode String
+
+  course Course @relation("target", fields: [courseCode], references: [code])
+  prereq Course @relation("source", fields: [prereqCode], references: [code])
+
+  @@id([courseCode, prereqCode])
+}
+
+model Template {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  requirements Requirement[]
+}
+
+model Requirement {
+  id            Int    @id @default(autoincrement())
+  name          String
+  courseGroupId Int
+  templateId    Int
+
+  template    Template    @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  amount      Int
+  courseGroup CourseGroup @relation(fields: [courseGroupId], references: [id])
+}
+
+model CourseGroup {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  links        CourseGroupLink[]
+  requirements Requirement[]
+}
+
+model CourseGroupLink {
+  id         Int
+  groupId    Int
+  courseCode String
+
+  courseGroup CourseGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  course      Course      @relation(fields: [courseCode], references: [code])
+
+  @@id([groupId, courseCode])
+}
