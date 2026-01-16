@@ -68,7 +68,6 @@ model CourseGroup {
 }
 
 model CourseGroupLink {
-  id         Int
   groupId    Int
   courseCode String
 
