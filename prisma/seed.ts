@@ -108,13 +108,21 @@ async function main() {
   });
 
   // 6. Requirement
-  await prisma.requirement.create({
-    data: {
-      name: "CS Core",
-      amount: 2,
-      templateId: template.id,
-      courseGroupId: csCore.id,
-    },
+  await prisma.requirement.createMany({
+    data: [
+      {
+        name: "CS Core",
+        amount: 3,
+        templateId: template.id,
+        courseGroupId: csCore.id,
+      },
+      {
+        name: "Math Core",
+        amount: 2,
+        templateId: template.id,
+        courseGroupId: mathCore.id,
+      },
+    ],
   });
 }
 

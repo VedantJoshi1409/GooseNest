@@ -1,4 +1,4 @@
-import { prisma } from "../prisma";
+import { prisma } from "./prisma";
 
 export async function getTemplateWithRequirements(id: number) {
   return prisma.template.findUnique({
@@ -17,4 +17,8 @@ export async function getTemplateWithRequirements(id: number) {
       },
     },
   });
+}
+
+export async function getAllTemplates() {
+  return prisma.template.findMany({ select: { id: true, name: true } });
 }
