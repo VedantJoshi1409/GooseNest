@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import Navbar from "../components/Navbar";
 import DegreeModal from "../components/DegreeModal";
-import CourseTree from "../components/CourseTree";
 import { useTemplate } from "../context/TemplateContext";
+
+const CourseGraph = dynamic(() => import("@/graph/CourseGraph"), {
+  ssr: false,
+});
 
 export default function DegreePlannerPage() {
   const { selectedTemplate, selectTemplate, isLoading } = useTemplate();
@@ -24,11 +28,12 @@ export default function DegreePlannerPage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-8 py-12">
-        {/* Current Degree Section */}
-        <section className="border border-[var(--goose-ink)] p-4 md:p-6 mb-8">
+
+      {/* Current Degree Bar */}
+      <section className="max-w-7xl w-full mx-auto px-8 py-4">
+        <div className="border border-[var(--goose-ink)] p-4 md:p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div>
               <h1 className="font-display text-xl md:text-2xl font-bold text-[var(--goose-ink)] mb-1">
@@ -56,17 +61,14 @@ export default function DegreePlannerPage() {
               Modify
             </button>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Prerequisite Tree Section */}
-        <section className="border border-[var(--goose-ink)] p-8 md:p-12">
-          <h2 className="font-display text-2xl md:text-3xl font-bold text-[var(--goose-ink)] mb-6">
-            Prerequisite Tree
-          </h2>
-
-          {/* Course Tree Visualization */}
-          <CourseTree requirements={selectedTemplate?.requirements || []} />
-        </section>
+      {/* 3D Course Graph */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-8 py-4">
+        <div className="border border-[var(--goose-mist)] rounded-lg overflow-hidden h-[calc(100vh-200px)]">
+          <CourseGraph />
+        </div>
       </main>
 
       {/* Degree Selection Modal */}
