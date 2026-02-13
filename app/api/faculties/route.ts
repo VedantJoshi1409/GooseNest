@@ -2,12 +2,12 @@ import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
-  const templates = await prisma.template.findMany({
-    select: { id: true, name: true },
+  const faculties = await prisma.faculty.findMany({
+    include: { courses: { select: { code: true, title: true } } },
     orderBy: { name: "asc" },
   });
 
-  return NextResponse.json(templates);
+  return NextResponse.json(faculties);
 }
 
 export async function POST(request: NextRequest) {
@@ -18,9 +18,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }
 
-  const template = await prisma.template.create({
+  const faculty = await prisma.faculty.create({
     data: { name },
   });
 
-  return NextResponse.json(template, { status: 201 });
+  return NextResponse.json(faculty, { status: 201 });
 }
