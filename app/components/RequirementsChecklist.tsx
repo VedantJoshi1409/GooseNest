@@ -28,9 +28,12 @@ interface DegreeData {
   };
 }
 
+const TERMS = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
+
 export default function RequirementsChecklist() {
   const [degreeData, setDegreeData] = useState<DegreeData | null>(null);
-  const [coursesTaken, setCoursesTaken] = useState<Set<string>>(new Set());
+  const [completedCourses, setCompletedCourses] = useState<Set<string>>(new Set());
+  const [plannedCourses, setPlannedCourses] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   // TODO: replace with actual user ID from auth
@@ -39,18 +42,35 @@ export default function RequirementsChecklist() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [degreeRes, coursesRes] = await Promise.all([
+        const [degreeRes, scheduleRes] = await Promise.all([
           fetch(`/api/users/${userId}/degree`),
-          fetch(`/api/users/${userId}/courses`),
+          fetch(`/api/users/${userId}/schedule`),
         ]);
 
         if (degreeRes.ok) {
           setDegreeData(await degreeRes.json());
         }
 
-        if (coursesRes.ok) {
-          const courses: { courseCode: string }[] = await coursesRes.json();
-          setCoursesTaken(new Set(courses.map((c) => c.courseCode)));
+        if (scheduleRes.ok) {
+          const data: {
+            currentTerm: string;
+            entries: { courseCode: string; term: string }[];
+          } = await scheduleRes.json();
+
+          const currentTermIndex = TERMS.indexOf(data.currentTerm);
+          const completed = new Set<string>();
+          const planned = new Set<string>();
+
+          for (const entry of data.entries) {
+            if (TERMS.indexOf(entry.term) < currentTermIndex) {
+              completed.add(entry.courseCode);
+            } else {
+              planned.add(entry.courseCode);
+            }
+          }
+
+          setCompletedCourses(completed);
+          setPlannedCourses(planned);
         }
       } catch (error) {
         console.error("Error fetching requirements data:", error);
@@ -103,13 +123,22 @@ export default function RequirementsChecklist() {
     );
   }
 
-  const totalRequired = requirements.reduce((sum, r) => sum + r.amount, 0);
-  const totalCompleted = requirements.reduce((sum, r) => {
+  const totalRequirements = requirements.length;
+  const totalFulfilled = requirements.filter((r) => {
     const completed = r.courseGroup.links.filter((l) =>
-      coursesTaken.has(l.courseCode)
+      completedCourses.has(l.courseCode)
     ).length;
-    return sum + Math.min(completed, r.amount);
-  }, 0);
+    return completed >= r.amount;
+  }).length;
+  const totalFulfilledWithPlanned = requirements.filter((r) => {
+    const completed = r.courseGroup.links.filter((l) =>
+      completedCourses.has(l.courseCode)
+    ).length;
+    const planned = r.courseGroup.links.filter((l) =>
+      plannedCourses.has(l.courseCode)
+    ).length;
+    return completed + planned >= r.amount;
+  }).length - totalFulfilled;
 
   return (
     <div className="p-4 flex flex-col h-full">
@@ -117,16 +146,23 @@ export default function RequirementsChecklist() {
         Requirements
       </h3>
       <p className="text-xs text-[var(--goose-slate)] mb-4">
-        {totalCompleted}/{totalRequired} completed
+        {totalFulfilled}/{totalRequirements} completed
+        {totalFulfilledWithPlanned > 0 && (
+          <span className="text-blue-600"> (+{totalFulfilledWithPlanned} planned)</span>
+        )}
       </p>
 
       <div className="flex-1 overflow-y-auto space-y-4 pr-1">
         {requirements.map((req) => {
           const eligible = req.courseGroup.links;
           const completed = eligible.filter((l) =>
-            coursesTaken.has(l.courseCode)
+            completedCourses.has(l.courseCode)
+          );
+          const planned = eligible.filter((l) =>
+            plannedCourses.has(l.courseCode)
           );
           const fulfilled = completed.length >= req.amount;
+          const fulfilledWithPlanned = completed.length + planned.length >= req.amount;
 
           return (
             <div key={req.id}>
@@ -135,7 +171,9 @@ export default function RequirementsChecklist() {
                   className={`w-4 h-4 rounded-sm border flex items-center justify-center flex-shrink-0 ${
                     fulfilled
                       ? "bg-[var(--goose-ink)] border-[var(--goose-ink)]"
-                      : "border-[var(--goose-slate)]"
+                      : fulfilledWithPlanned
+                        ? "bg-blue-500 border-blue-500"
+                        : "border-[var(--goose-slate)]"
                   }`}
                 >
                   {fulfilled && (
@@ -150,6 +188,20 @@ export default function RequirementsChecklist() {
                       strokeLinejoin="round"
                     >
                       <path d="M2 6l3 3 5-5" />
+                    </svg>
+                  )}
+                  {!fulfilled && fulfilledWithPlanned && (
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M2 6h8" />
                     </svg>
                   )}
                 </div>
@@ -167,28 +219,37 @@ export default function RequirementsChecklist() {
               <div className="ml-6">
                 <p className="text-xs text-[var(--goose-slate)] mb-1">
                   {completed.length}/{req.amount} courses
+                  {planned.length > 0 && (
+                    <span className="text-blue-600"> (+{planned.length} planned)</span>
+                  )}
                 </p>
                 <div className="space-y-0.5">
                   {eligible.map((link) => {
-                    const taken = coursesTaken.has(link.courseCode);
+                    const isCompleted = completedCourses.has(link.courseCode);
+                    const isPlanned = plannedCourses.has(link.courseCode);
                     return (
                       <div
                         key={link.courseCode}
                         className={`text-xs flex items-center gap-1.5 ${
-                          taken
+                          isCompleted
                             ? "text-[var(--goose-slate)]"
-                            : "text-[var(--goose-ink)]"
+                            : isPlanned
+                              ? "text-blue-600"
+                              : "text-[var(--goose-ink)]"
                         }`}
                       >
                         <span
                           className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                            taken
+                            isCompleted
                               ? "bg-[var(--goose-ink)]"
-                              : "bg-[var(--goose-mist)]"
+                              : isPlanned
+                                ? "bg-blue-500"
+                                : "bg-[var(--goose-mist)]"
                           }`}
                         />
-                        <span className={taken ? "line-through" : ""}>
+                        <span className={isCompleted ? "line-through" : ""}>
                           {link.courseCode}
+                          {isPlanned && " (planned)"}
                         </span>
                       </div>
                     );

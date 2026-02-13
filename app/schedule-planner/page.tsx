@@ -30,6 +30,17 @@ export default function SchedulePlannerPage() {
   const [searchResults, setSearchResults] = useState<Course[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const channelRef = useRef<BroadcastChannel | null>(null);
+
+  useEffect(() => {
+    channelRef.current = new BroadcastChannel("schedule-updates");
+    return () => channelRef.current?.close();
+  }, []);
+
+  const notifyChange = () => channelRef.current?.postMessage("changed");
+
+  const isTermCompleted = (term: string) =>
+    TERMS.indexOf(term) < TERMS.indexOf(currentTerm);
 
   // Fetch schedule on mount
   useEffect(() => {
@@ -102,6 +113,7 @@ export default function SchedulePlannerPage() {
     }));
     setSearchQuery("");
     setSearchResults([]);
+    notifyChange();
   };
 
   const handleMoveCourse = async (courseCode: string, targetTerm: string) => {
@@ -122,6 +134,7 @@ export default function SchedulePlannerPage() {
       };
     });
     setEditingCourse(null);
+    notifyChange();
   };
 
   const handleSetCurrentTerm = async (term: string) => {
@@ -132,6 +145,7 @@ export default function SchedulePlannerPage() {
     });
     if (!res.ok) return;
     setCurrentTerm(term);
+    notifyChange();
   };
 
   const handleRemoveCourse = async (courseCode: string) => {
@@ -147,6 +161,7 @@ export default function SchedulePlannerPage() {
       [selectedTerm]: prev[selectedTerm].filter((c) => c.code !== courseCode),
     }));
     setEditingCourse(null);
+    notifyChange();
   };
 
   return (
@@ -256,6 +271,7 @@ export default function SchedulePlannerPage() {
                 <CourseCard
                   key={course.code}
                   course={course}
+                  completed={isTermCompleted(selectedTerm)}
                   isEditing={editingCourse === course.code}
                   onEdit={() => setEditingCourse(course.code)}
                   onMove={(targetTerm) => handleMoveCourse(course.code, targetTerm)}

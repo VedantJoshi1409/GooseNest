@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { readFileSync } from "fs";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../app/generated/prisma/client.js";
@@ -7,11 +8,21 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
+interface CourseJson {
+  id: string;
+  title: string;
+  subject: string;
+  description: string;
+  faculty: string;
+  level: number;
+  prerequisites: string[];
+  unlocks: string[];
+}
+
 async function main() {
   await prisma.$executeRawUnsafe(`
   TRUNCATE TABLE
     "TermCourse",
-    "UserCourse",
     "PlanRequirement",
     "Plan",
     "User",
@@ -25,53 +36,63 @@ async function main() {
   RESTART IDENTITY CASCADE;
 `);
 
-  // 1. Faculty
+  // 1. Load courses from JSON
+  const coursesJson: Record<string, CourseJson> = JSON.parse(
+    readFileSync(new URL("../lib/courses.json", import.meta.url), "utf8"),
+  );
+  const allCourses = Object.values(coursesJson);
+  console.log(`Loaded ${allCourses.length} courses from courses.json`);
+
+  // 2. Seed faculties
+  const faculties = [...new Set(allCourses.map((c) => c.faculty))];
   await prisma.faculty.createMany({
-    data: [{ name: "MAT" }],
+    data: faculties.map((name) => ({ name })),
+  });
+  console.log(`Seeded ${faculties.length} faculties: ${faculties.join(", ")}`);
+
+  // 3. Seed courses in batches
+  const BATCH_SIZE = 500;
+  const courseData = allCourses.map((c) => {
+    // Strip course code prefix from title (e.g. "CS135 - Designing..." -> "Designing...")
+    const title = c.title.includes(" - ")
+      ? c.title.substring(c.title.indexOf(" - ") + 3)
+      : c.title;
+    return { code: c.id, title, facultyName: c.faculty };
   });
 
-  // 2. Courses (CS and MATH are both under MAT faculty)
-  await prisma.course.createMany({
-    data: [
-      { code: "CS135", title: "Designing Functional Programs", facultyName: "MAT" },
-      { code: "CS136", title: "Elementary Algorithm Design", facultyName: "MAT" },
-      { code: "CS245", title: "Logic and Computation", facultyName: "MAT" },
-      { code: "CS246", title: "Object-Oriented Software Development", facultyName: "MAT" },
-      { code: "MATH135", title: "Algebra", facultyName: "MAT" },
-      { code: "MATH137", title: "Calculus 1", facultyName: "MAT" },
-      { code: "MATH138", title: "Calculus 2", facultyName: "MAT" },
-      { code: "MATH136", title: "Linear Algebra 1", facultyName: "MAT" },
-    ],
-  });
+  for (let i = 0; i < courseData.length; i += BATCH_SIZE) {
+    const batch = courseData.slice(i, i + BATCH_SIZE);
+    await prisma.course.createMany({ data: batch });
+  }
+  console.log(`Seeded ${courseData.length} courses`);
 
-  await prisma.coursePrereq.createMany({
-    data: [
-      { courseCode: "CS136", prereqCode: "CS135" },
-      { courseCode: "CS246", prereqCode: "CS245" },
-      { courseCode: "CS245", prereqCode: "CS136" },
-      { courseCode: "MATH138", prereqCode: "MATH137" },
-      { courseCode: "MATH136", prereqCode: "MATH135" },
-    ],
-  });
+  // 4. Seed prerequisites in batches
+  const prereqData: { courseCode: string; prereqCode: string }[] = [];
+  for (const course of allCourses) {
+    for (const prereq of course.prerequisites) {
+      prereqData.push({ courseCode: course.id, prereqCode: prereq });
+    }
+  }
 
-  // 3. Course Group
+  for (let i = 0; i < prereqData.length; i += BATCH_SIZE) {
+    const batch = prereqData.slice(i, i + BATCH_SIZE);
+    await prisma.coursePrereq.createMany({ data: batch });
+  }
+  console.log(`Seeded ${prereqData.length} prerequisite links`);
+
+  // 5. Course Groups
   const csCore = await prisma.courseGroup.create({
-    data: {
-      name: "CS Core Courses",
-    },
+    data: { name: "CS Core Courses" },
   });
 
   const mathCore = await prisma.courseGroup.create({
-    data: {
-      name: "Math Core Courses",
-    },
+    data: { name: "Math Core Courses" },
   });
 
-  // 4. Link courses to group
   await prisma.courseGroupLink.createMany({
     data: [
-      { groupId: csCore.id, courseCode: "CS135" },
-      { groupId: csCore.id, courseCode: "CS136" },
+      { groupId: csCore.id, courseCode: "CS145" },
+      { groupId: csCore.id, courseCode: "CS146" },
       { groupId: csCore.id, courseCode: "CS245" },
       { groupId: csCore.id, courseCode: "CS246" },
     ],
@@ -79,21 +100,18 @@ async function main() {
 
   await prisma.courseGroupLink.createMany({
     data: [
-      { groupId: mathCore.id, courseCode: "MATH135" },
-      { groupId: mathCore.id, courseCode: "MATH136" },
-      { groupId: mathCore.id, courseCode: "MATH137" },
-      { groupId: mathCore.id, courseCode: "MATH138" },
+      { groupId: mathCore.id, courseCode: "MATH145" },
+      { groupId: mathCore.id, courseCode: "MATH146" },
+      { groupId: mathCore.id, courseCode: "MATH147" },
+      { groupId: mathCore.id, courseCode: "MATH148" },
     ],
   });
 
-  // 5. Template
+  // 6. Template
   const template = await prisma.template.create({
-    data: {
-      name: "Computer Science, Honours, 2025",
-    },
+    data: { name: "Computer Science, Honours, 2025" },
   });
 
-  // 6. Requirement
   await prisma.requirement.createMany({
     data: [
       {
@@ -111,15 +129,11 @@ async function main() {
     ],
   });
 
-  // 7. Seed user with a custom plan and courses taken
+  // 7. Seed user
   const user = await prisma.user.create({
-    data: {
-      email: "test@uwaterloo.ca",
-      name: "Test User",
-    },
+    data: { email: "test@uwaterloo.ca", name: "Test User" },
   });
 
-  // Create a custom plan based on the template
   const plan = await prisma.plan.create({
     data: {
       name: "Computer Science, Honours, 2025 (Custom)",
@@ -128,15 +142,9 @@ async function main() {
     },
   });
 
-  // Copy template requirements into plan requirements
   await prisma.planRequirement.createMany({
     data: [
-      {
-        name: "CS Core",
-        amount: 3,
-        planId: plan.id,
-        courseGroupId: csCore.id,
-      },
+      { name: "CS Core", amount: 3, planId: plan.id, courseGroupId: csCore.id },
       {
         name: "Math Core",
         amount: 2,
@@ -146,30 +154,23 @@ async function main() {
     ],
   });
 
-  // Mark some courses as taken
-  await prisma.userCourse.createMany({
-    data: [
-      { userId: user.id, courseCode: "CS135" },
-      { userId: user.id, courseCode: "CS136" },
-      { userId: user.id, courseCode: "MATH135" },
-      { userId: user.id, courseCode: "MATH137" },
-    ],
-  });
-
-  // Seed schedule (term-course assignments)
   await prisma.termCourse.createMany({
     data: [
-      { userId: user.id, courseCode: "CS135", term: "1A" },
-      { userId: user.id, courseCode: "MATH135", term: "1A" },
-      { userId: user.id, courseCode: "CS136", term: "1B" },
-      { userId: user.id, courseCode: "MATH137", term: "1B" },
+      { userId: user.id, courseCode: "CS145", term: "1A" },
+      { userId: user.id, courseCode: "MATH145", term: "1A" },
+      { userId: user.id, courseCode: "MATH137", term: "1A" },
+      { userId: user.id, courseCode: "COMMST100", term: "1A" },
+      { userId: user.id, courseCode: "AFM101", term: "1A" },
+      { userId: user.id, courseCode: "CS146", term: "1B" },
+      { userId: user.id, courseCode: "MATH148", term: "1B" },
+      { userId: user.id, courseCode: "COMMST225", term: "1B" },
+      { userId: user.id, courseCode: "MATH146", term: "1B" },
+      { userId: user.id, courseCode: "STAT230", term: "1B" },
     ],
   });
 
   console.log("Seeded user:", user.email);
   console.log("Plan:", plan.name);
-  console.log("Courses taken: CS135, CS136, MATH135, MATH137");
-  console.log("Schedule: CS135+MATH135 in 1A, CS136+MATH137 in 1B");
 }
 
 main()

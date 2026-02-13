@@ -9,6 +9,7 @@ interface Course {
 
 interface CourseCardProps {
   course: Course;
+  completed: boolean;
   isEditing: boolean;
   onEdit: () => void;
   onMove: (targetTerm: string) => void;
@@ -20,6 +21,7 @@ const TERMS = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
 
 export default function CourseCard({
   course,
+  completed,
   isEditing,
   onEdit,
   onMove,
@@ -81,12 +83,20 @@ export default function CourseCard({
     <div ref={cardRef} className="relative">
       <div className="border border-[var(--goose-mist)] hover:border-[var(--goose-ink)] p-4 rounded transition-colors">
         <div className="flex items-center justify-between">
-          <div>
-            <div className="font-display font-semibold text-[var(--goose-ink)]">
-              {course.code}
-            </div>
-            <div className="text-sm text-[var(--goose-slate)] mt-1">
-              {course.name}
+          <div className="flex items-center gap-3">
+            {completed && (
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-green-600 shrink-0">
+                <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M6 10l3 3 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+            <div>
+              <div className={`font-display font-semibold ${completed ? 'text-[var(--goose-slate)]' : 'text-[var(--goose-ink)]'}`}>
+                {course.code}
+              </div>
+              <div className="text-sm text-[var(--goose-slate)] mt-1">
+                {course.name}
+              </div>
             </div>
           </div>
 

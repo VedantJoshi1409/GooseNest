@@ -25,18 +25,7 @@ model User {
   template   Template? @relation(fields: [templateId], references: [id])
 
   plan         Plan?
-  coursesTaken  UserCourse[]
   schedule     TermCourse[]
-}
-
-model UserCourse {
-  userId     Int
-  courseCode String
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course Course @relation(fields: [courseCode], references: [code])
-
-  @@id([userId, courseCode])
 }
 
 model Plan {
@@ -79,7 +68,6 @@ model Course {
   unlocks CoursePrereq[] @relation("source")
 
   courseGroups CourseGroupLink[]
-  takenBy     UserCourse[]
   termCourses TermCourse[]
 }
 
