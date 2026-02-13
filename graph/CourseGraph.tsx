@@ -6,10 +6,7 @@ const ForceGraph3DFn = ForceGraph3D as unknown as () => (
   elem: HTMLElement,
 ) => ForceGraph3DInstance;
 import { useEffect, useRef, useState } from "react";
-import { GraphData, GraphNode } from "./types";
-import FacultySelector from "./FacultySelector";
-import CourseSearch from "./CourseSearch";
-import ModeToggle from "./ModeToggle";
+import { GraphData, GraphLink, GraphNode } from "./types";
 import NodeInfoBox from "./NodeInfoBox";
 
 const FACULTY_COLORS: Record<string, string> = {
@@ -22,7 +19,15 @@ const FACULTY_COLORS: Record<string, string> = {
   "N/A": "#888888",
 };
 
-const FACULTY_IDS = new Set(Object.keys(FACULTY_COLORS));
+const FACULTY_NAMES: Record<string, string> = {
+  MAT: "Mathematics",
+  SCI: "Science",
+  HEA: "Health Sciences",
+  ENV: "Environment",
+  ENG: "Engineering",
+  ART: "Arts",
+  "N/A": "Other",
+};
 
 function mixWithWhite(hex: string, amount: number): string {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -36,61 +41,92 @@ function mixWithWhite(hex: string, amount: number): string {
   return `#${newR.toString(16).padStart(2, "0")}${newG.toString(16).padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
 }
 
+const ROOT_ID = "__root__";
+
+function makeNode(id: string, title: string, faculty: string): GraphNode {
+  return {
+    id,
+    title,
+    subject: "",
+    description: "",
+    faculty,
+    prerequisites: [],
+    unlocks: [],
+    level: 0,
+  };
+}
+
 export default function CourseGraph() {
   const ref = useRef<HTMLDivElement>(null);
   const graphRef = useRef<ForceGraph3DInstance | null>(null);
-
-  const [mode, setMode] = useState<"faculty" | "search">("faculty");
-  const [selectedFaculties, setSelectedFaculties] = useState<string[]>([]);
-  const [searchCourses, setSearchCourses] = useState<string[]>([]);
-  const [includeUnlocked, setIncludeUnlocked] = useState(true);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
 
-  const handleCourseSearch = (courses: string[], withUnlocked: boolean) => {
-    setSearchCourses(courses);
-    setIncludeUnlocked(withUnlocked);
-  };
+  // TODO: replace with actual user ID from auth
+  const userId = 1;
 
   useEffect(() => {
     const loadData = async () => {
-      let data: GraphData;
-      let url: string;
+      const coursesRes = await fetch(`/api/users/${userId}/courses`);
+      if (!coursesRes.ok) return;
 
-      if (mode === "faculty") {
-        if (selectedFaculties.length === 0) {
-          data = { nodes: [], links: [] };
-        } else {
-          url = `/api/graph?faculties=${selectedFaculties.join(",")}`;
-          const res = await fetch(url);
-          data = await res.json();
+      const userCourses: { courseCode: string }[] = await coursesRes.json();
+      const courseCodes = userCourses.map((c) => c.courseCode);
+
+      if (courseCodes.length === 0) {
+        if (graphRef.current) {
+          graphRef.current.graphData({ nodes: [], links: [] });
         }
-      } else {
-        if (searchCourses.length === 0) {
-          data = { nodes: [], links: [] };
-        } else {
-          url = `/api/graph?courses=${searchCourses.join(",")}&includeUnlocked=${includeUnlocked}`;
-          const res = await fetch(url);
-          data = await res.json();
-        }
+        return;
       }
 
-      // Count how many courses each node unlocks
-      const unlockCount: Record<string, number> = {};
-      data.nodes.forEach((node) => {
-        node.prerequisites.forEach((prereq) => {
-          unlockCount[prereq] = (unlockCount[prereq] || 0) + 1;
-        });
+      // Fetch course nodes with prerequisite data
+      const res = await fetch(
+        `/api/graph?courses=${courseCodes.join(",")}&includeUnlocked=false`,
+      );
+      const rawData: GraphData = await res.json();
+      const courseNodeIds = new Set(rawData.nodes.map((n) => n.id));
+
+      // Group courses by faculty
+      const facultyGroups = new Map<string, GraphNode[]>();
+      rawData.nodes.forEach((node) => {
+        const fac = node.faculty || "N/A";
+        if (!facultyGroups.has(fac)) facultyGroups.set(fac, []);
+        facultyGroups.get(fac)!.push(node);
       });
 
-      const maxUnlocks = Math.max(...Object.values(unlockCount), 1);
+      // Build graph: root -> faculties (with children only) -> courses
+      const nodes: GraphNode[] = [makeNode(ROOT_ID, "Courses Taken", ROOT_ID)];
+      const links: GraphLink[] = [];
+      const facultyIds = new Set<string>();
 
-      data.nodes.forEach((node: any) => {
-        node.unlockCount = unlockCount[node.id] || 0;
-        node.unlockRatio = node.unlockCount / maxUnlocks;
+      facultyGroups.forEach((courses, facCode) => {
+        // Faculty node
+        const facTitle = FACULTY_NAMES[facCode] || facCode;
+        nodes.push(makeNode(facCode, facTitle, facCode));
+        facultyIds.add(facCode);
+        links.push({ source: ROOT_ID, target: facCode });
+
+        // Course nodes
+        courses.forEach((course) => nodes.push(course));
       });
 
-      // console.log(data.nodes.length, "nodes loaded");
-      // console.log(data.links.length, "links loaded");
+      // Course links: prereq links between taken courses, otherwise link to faculty
+      rawData.nodes.forEach((course) => {
+        const validPrereqs = course.prerequisites.filter((p) =>
+          courseNodeIds.has(p),
+        );
+
+        if (validPrereqs.length > 0) {
+          validPrereqs.forEach((prereq) => {
+            links.push({ source: prereq, target: course.id });
+          });
+        } else {
+          links.push({ source: course.faculty || "N/A", target: course.id });
+        }
+      });
+
+      const data: GraphData = { nodes, links };
+
       if (graphRef.current) {
         graphRef.current.graphData(data);
       } else {
@@ -98,16 +134,17 @@ export default function CourseGraph() {
           .graphData(data)
           .nodeLabel("title")
           .nodeColor((node: any) => {
+            if (node.id === ROOT_ID) return "#ffffff";
             const baseColor = FACULTY_COLORS[node.faculty] || "#888888";
-            if (FACULTY_IDS.has(node.id)) {
+            if (facultyIds.has(node.id)) {
               return mixWithWhite(baseColor, 0.7);
             }
             return baseColor;
           })
           .nodeVal((node: any) => {
-            if (FACULTY_IDS.has(node.id)) return 15;
-            const unlockCount = node.unlockCount || 0;
-            return Math.min(Math.max(1, Math.pow(1.15, unlockCount)), 10);
+            if (node.id === ROOT_ID) return 20;
+            if (facultyIds.has(node.id)) return 12;
+            return 4;
           })
           .backgroundColor("#050510")
           .onNodeClick((node) => {
@@ -117,27 +154,16 @@ export default function CourseGraph() {
     };
 
     loadData();
-  }, [mode, selectedFaculties, searchCourses, includeUnlocked]);
+  }, []);
 
   return (
-    <div className="relative w-full h-screen">
+    <div className="relative w-full h-full">
       {selectedNode && (
         <NodeInfoBox
           node={selectedNode}
           onClose={() => setSelectedNode(null)}
         />
       )}
-
-      <ModeToggle mode={mode} onChange={setMode}>
-        {mode === "faculty" ? (
-          <FacultySelector
-            selected={selectedFaculties}
-            onChange={setSelectedFaculties}
-          />
-        ) : (
-          <CourseSearch onSearch={handleCourseSearch} />
-        )}
-      </ModeToggle>
 
       <div ref={ref} className="w-full h-full" />
     </div>

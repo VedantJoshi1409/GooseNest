@@ -325,10 +325,69 @@ export default function DegreeModal({
     setCustomRequirements((prev) => prev.filter((req) => req.id !== id));
   };
 
-  const handleConfirmSelection = () => {
-    if (selectedDegree) {
+  const hasModifications = () => {
+    if (!selectedDegree?.requirements) return false;
+    // Check if any template requirements were toggled off
+    const allEnabled = selectedDegree.requirements.every((_, index) =>
+      enabledRequirements.has(index)
+    );
+    // Check if custom requirements were added
+    return !allEnabled || customRequirements.length > 0;
+  };
+
+  const handleConfirmSelection = async () => {
+    if (!selectedDegree) return;
+
+    // TODO: replace with actual user ID from auth
+    const userId = 1;
+
+    try {
+      if (!hasModifications()) {
+        // No modifications — assign default template
+        await fetch(`/api/users/${userId}/degree`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ templateId: selectedDegree.id }),
+        });
+      } else {
+        // Build requirements list from enabled template reqs + custom reqs
+        const requirements: any[] = [];
+
+        // Add enabled template requirements
+        selectedDegree.requirements?.forEach((req, index) => {
+          if (enabledRequirements.has(index)) {
+            requirements.push({
+              name: req.courseGroup?.name || req.name || `Requirement ${index + 1}`,
+              amount: req.amount || 1,
+              courseGroupId: req.courseGroupId,
+            });
+          }
+        });
+
+        // Add custom requirements
+        customRequirements.forEach((req) => {
+          requirements.push({
+            name: req.title,
+            amount: req.amount,
+            courseCodes: req.eligibleCourses,
+          });
+        });
+
+        await fetch(`/api/users/${userId}/degree`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            templateId: selectedDegree.id,
+            name: `${selectedDegree.name} (Custom)`,
+            requirements,
+          }),
+        });
+      }
+
       onSelectDegree(selectedDegree.id, selectedDegree.name);
       onClose();
+    } catch (error) {
+      console.error("Error saving degree selection:", error);
     }
   };
 

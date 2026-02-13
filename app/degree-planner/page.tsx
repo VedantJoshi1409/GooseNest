@@ -4,6 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import Navbar from "../components/Navbar";
 import DegreeModal from "../components/DegreeModal";
+import RequirementsChecklist from "../components/RequirementsChecklist";
 import { useTemplate } from "../context/TemplateContext";
 
 const CourseGraph = dynamic(() => import("@/graph/CourseGraph"), {
@@ -64,9 +65,12 @@ export default function DegreePlannerPage() {
         </div>
       </section>
 
-      {/* 3D Course Graph */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-8 py-4">
-        <div className="border border-[var(--goose-mist)] rounded-lg overflow-hidden h-[calc(100vh-200px)]">
+      {/* Requirements Checklist + 3D Course Graph */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-8 py-4 flex gap-4 h-[calc(100vh-200px)]">
+        <aside className="w-64 flex-shrink-0 border border-[var(--goose-mist)] rounded-lg overflow-hidden">
+          <RequirementsChecklist />
+        </aside>
+        <div className="flex-1 border border-[var(--goose-mist)] rounded-lg overflow-hidden">
           <CourseGraph />
         </div>
       </main>
