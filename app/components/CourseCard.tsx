@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 
 interface Course {
-  id: string;
   code: string;
   name: string;
 }

@@ -17,14 +17,16 @@ model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  currentTerm String   @default("1A")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   templateId Int?
   template   Template? @relation(fields: [templateId], references: [id])
 
   plan         Plan?
   coursesTaken  UserCourse[]
+  schedule     TermCourse[]
 }
 
 model UserCourse {
@@ -78,6 +80,7 @@ model Course {
 
   courseGroups CourseGroupLink[]
   takenBy     UserCourse[]
+  termCourses TermCourse[]
 }
 
 model CoursePrereq {
@@ -127,4 +130,15 @@ model CourseGroupLink {
   course      Course      @relation(fields: [courseCode], references: [code])
 
   @@id([groupId, courseCode])
+}
+
+model TermCourse {
+  userId     Int
+  courseCode String
+  term       String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseCode], references: [code])
+
+  @@id([userId, courseCode])
 }

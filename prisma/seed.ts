@@ -10,6 +10,7 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   await prisma.$executeRawUnsafe(`
   TRUNCATE TABLE
+    "TermCourse",
     "UserCourse",
     "PlanRequirement",
     "Plan",
@@ -155,9 +156,20 @@ async function main() {
     ],
   });
 
+  // Seed schedule (term-course assignments)
+  await prisma.termCourse.createMany({
+    data: [
+      { userId: user.id, courseCode: "CS135", term: "1A" },
+      { userId: user.id, courseCode: "MATH135", term: "1A" },
+      { userId: user.id, courseCode: "CS136", term: "1B" },
+      { userId: user.id, courseCode: "MATH137", term: "1B" },
+    ],
+  });
+
   console.log("Seeded user:", user.email);
   console.log("Plan:", plan.name);
   console.log("Courses taken: CS135, CS136, MATH135, MATH137");
+  console.log("Schedule: CS135+MATH135 in 1A, CS136+MATH137 in 1B");
 }
 
 main()
