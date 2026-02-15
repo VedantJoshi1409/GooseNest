@@ -6,7 +6,7 @@ import { useTemplate } from "../context/TemplateContext";
 interface DegreeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectDegree: (templateId: number, degreeName: string) => void;
+  onSelectDegree: () => void;
 }
 
 interface SelectedDegreeState {
@@ -21,7 +21,19 @@ interface CustomRequirement {
   amount: number;
   eligibleCourses: string[];
   eligibleFaculties: string[];
+  facultyGroupIds: number[];
   isCustom: true;
+}
+
+interface FacultyInfo {
+  name: string;
+  courseGroupId: number | null;
+  _count: { courses: number };
+}
+
+interface CourseSearchResult {
+  code: string;
+  title: string;
 }
 
 export default function DegreeModal({
@@ -43,6 +55,11 @@ export default function DegreeModal({
     CustomRequirement[]
   >([]);
   const [isCreatingCustom, setIsCreatingCustom] = useState(false);
+  const [planName, setPlanName] = useState("");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [originalDegreeId, setOriginalDegreeId] = useState<number | null>(null);
+  const [originalType, setOriginalType] = useState<"template" | "plan" | "none">("none");
+  const [isDirty, setIsDirty] = useState(false);
 
   // Custom requirement form state
   const [customTitle, setCustomTitle] = useState("");
@@ -52,63 +69,41 @@ export default function DegreeModal({
   const [selectedFaculties, setSelectedFaculties] = useState<string[]>([]);
   const [isCourseDropdownOpen, setIsCourseDropdownOpen] = useState(false);
 
+  const [faculties, setFaculties] = useState<FacultyInfo[]>([]);
+  const [courseSearchResults, setCourseSearchResults] = useState<CourseSearchResult[]>([]);
+  const [isSearchingCourses, setIsSearchingCourses] = useState(false);
+  const courseSearchDebounce = useRef<ReturnType<typeof setTimeout>>(null);
+
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const courseDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Mock data - in production, fetch from API
-  const mockCourses = [
-    {
-      code: "CS 135",
-      name: "Designing Functional Programs",
-      faculty: "Mathematics",
-    },
-    {
-      code: "CS 136",
-      name: "Elementary Algorithm Design and Data Abstraction",
-      faculty: "Mathematics",
-    },
-    {
-      code: "MATH 135",
-      name: "Algebra for Honours Mathematics",
-      faculty: "Mathematics",
-    },
-    {
-      code: "MATH 136",
-      name: "Linear Algebra 1 for Honours Mathematics",
-      faculty: "Mathematics",
-    },
-    {
-      code: "ENGL 109",
-      name: "Introduction to Academic Writing",
-      faculty: "Arts",
-    },
-    { code: "PSYCH 101", name: "Introductory Psychology", faculty: "Arts" },
-    { code: "ECE 105", name: "Classical Mechanics", faculty: "Engineering" },
-    {
-      code: "ECE 106",
-      name: "Electricity and Magnetism",
-      faculty: "Engineering",
-    },
-  ];
+  // Fetch faculties on mount
+  useEffect(() => {
+    fetch("/api/faculties")
+      .then((res) => res.ok ? res.json() : [])
+      .then((data) => setFaculties(data))
+      .catch(() => {});
+  }, []);
 
-  const faculties = [
-    "Mathematics",
-    "Arts",
-    "Engineering",
-    "Science",
-    "Environment",
-    "Health",
-  ];
-
-  const filteredCourses = useMemo(() => {
-    return mockCourses.filter(
-      (course) =>
-        course.code.toLowerCase().includes(courseSearchQuery.toLowerCase()) ||
-        course.name.toLowerCase().includes(courseSearchQuery.toLowerCase()) ||
-        course.faculty.toLowerCase().includes(courseSearchQuery.toLowerCase())
-    );
-  }, [courseSearchQuery]);
+  // Debounced course search
+  const handleCourseSearch = (value: string) => {
+    setCourseSearchQuery(value);
+    if (courseSearchDebounce.current) clearTimeout(courseSearchDebounce.current);
+    if (!value.trim()) {
+      setCourseSearchResults([]);
+      setIsSearchingCourses(false);
+      return;
+    }
+    setIsSearchingCourses(true);
+    courseSearchDebounce.current = setTimeout(async () => {
+      const res = await fetch(`/api/courses/search?q=${encodeURIComponent(value)}`);
+      if (res.ok) {
+        setCourseSearchResults(await res.json());
+      }
+      setIsSearchingCourses(false);
+    }, 300);
+  };
 
   // Filter degrees based on search query using useMemo
   const filteredDegrees = useMemo(() => {
@@ -185,9 +180,56 @@ export default function DegreeModal({
     };
   }, [isOpen]);
 
-  // Reset state when modal closes
+  // Load current degree on open, reset on close
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      // Fetch current degree from DB
+      const loadCurrentDegree = async () => {
+        setLoadingRequirements(true);
+        try {
+          // TODO: replace with actual user ID from auth
+          const res = await fetch("/api/users/1/degree");
+          if (!res.ok) return;
+          const data = await res.json();
+
+          if (data.type === "template" && data.template) {
+            setSearchQuery(data.template.name);
+            setPlanName(data.template.name);
+            setOriginalDegreeId(data.template.id);
+            setOriginalType("template");
+            setSelectedDegree({
+              id: data.template.id,
+              name: data.template.name,
+              requirements: data.template.requirements || [],
+            });
+            const allIds = new Set<number>(
+              (data.template.requirements || []).map((_: any, i: number) => i)
+            );
+            setEnabledRequirements(allIds);
+          } else if (data.type === "plan" && data.plan) {
+            const templateId = data.plan.templateId ?? data.plan.id;
+            setSearchQuery(data.plan.template?.name || data.plan.name);
+            setPlanName(data.plan.name);
+            setOriginalDegreeId(templateId);
+            setOriginalType("plan");
+            setSelectedDegree({
+              id: templateId,
+              name: data.plan.name,
+              requirements: data.plan.requirements || [],
+            });
+            const allIds = new Set<number>(
+              (data.plan.requirements || []).map((_: any, i: number) => i)
+            );
+            setEnabledRequirements(allIds);
+          }
+        } catch (error) {
+          console.error("Error loading current degree:", error);
+        } finally {
+          setLoadingRequirements(false);
+        }
+      };
+      loadCurrentDegree();
+    } else {
       setSelectedDegree(null);
       setSearchQuery("");
       setIsDropdownOpen(false);
@@ -195,6 +237,11 @@ export default function DegreeModal({
       setEnabledRequirements(new Set());
       setCustomRequirements([]);
       setIsCreatingCustom(false);
+      setPlanName("");
+      setIsEditingName(false);
+      setOriginalDegreeId(null);
+      setOriginalType("none");
+      setIsDirty(false);
       resetCustomForm();
     }
   }, [isOpen]);
@@ -203,6 +250,8 @@ export default function DegreeModal({
     setCustomTitle("");
     setCustomAmount(1);
     setCourseSearchQuery("");
+    setCourseSearchResults([]);
+    setIsSearchingCourses(false);
     setSelectedCourses([]);
     setSelectedFaculties([]);
   };
@@ -224,8 +273,10 @@ export default function DegreeModal({
           name: degreeName,
           requirements: templateData.requirements || [],
         });
+        setPlanName(degreeName);
+        setIsDirty(true);
         // Enable all requirements by default
-        const allRequirementIds = new Set(
+        const allRequirementIds = new Set<number>(
           templateData.requirements?.map((_: any, index: number) => index) || []
         );
         setEnabledRequirements(allRequirementIds);
@@ -254,7 +305,10 @@ export default function DegreeModal({
     setIsCreatingCustom(false);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
+    // Persist the edited requirements then close edit mode
+    setIsDirty(true);
+    await persistDegree();
     setIsEditingRequirements(false);
     setIsCreatingCustom(false);
   };
@@ -286,12 +340,17 @@ export default function DegreeModal({
       return;
     }
 
+    const facultyGroupIds = selectedFaculties
+      .map((name) => faculties.find((f) => f.name === name)?.courseGroupId)
+      .filter((id): id is number => id != null);
+
     const newCustomReq: CustomRequirement = {
       id: `custom-${Date.now()}`,
       title: customTitle,
       amount: customAmount,
       eligibleCourses: selectedCourses,
       eligibleFaculties: selectedFaculties,
+      facultyGroupIds,
       isCustom: true,
     };
 
@@ -335,56 +394,67 @@ export default function DegreeModal({
     return !allEnabled || customRequirements.length > 0;
   };
 
-  const handleConfirmSelection = async () => {
+  const persistDegree = async () => {
     if (!selectedDegree) return;
 
     // TODO: replace with actual user ID from auth
     const userId = 1;
 
-    try {
-      if (!hasModifications()) {
-        // No modifications — assign default template
-        await fetch(`/api/users/${userId}/degree`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ templateId: selectedDegree.id }),
-        });
-      } else {
-        // Build requirements list from enabled template reqs + custom reqs
-        const requirements: any[] = [];
+    const modified = hasModifications();
+    const nameChanged = planName !== selectedDegree.name;
+    const needsPlan = modified || nameChanged ||
+      (originalType === "plan" && selectedDegree.id === originalDegreeId);
 
-        // Add enabled template requirements
-        selectedDegree.requirements?.forEach((req, index) => {
-          if (enabledRequirements.has(index)) {
-            requirements.push({
-              name: req.courseGroup?.name || req.name || `Requirement ${index + 1}`,
-              amount: req.amount || 1,
-              courseGroupId: req.courseGroupId,
-            });
-          }
-        });
+    if (!needsPlan) {
+      // No modifications, different template selected — assign default template
+      await fetch(`/api/users/${userId}/degree`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ templateId: selectedDegree.id }),
+      });
+    } else {
+      // Build requirements list from enabled reqs + custom reqs
+      const requirements: any[] = [];
 
-        // Add custom requirements
-        customRequirements.forEach((req) => {
+      selectedDegree.requirements?.forEach((req, index) => {
+        if (enabledRequirements.has(index)) {
           requirements.push({
-            name: req.title,
-            amount: req.amount,
-            courseCodes: req.eligibleCourses,
+            name: req.courseGroup?.name || req.name || `Requirement ${index + 1}`,
+            amount: req.amount || 1,
+            courseGroupId: req.courseGroupId,
           });
-        });
+        }
+      });
 
-        await fetch(`/api/users/${userId}/degree`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            templateId: selectedDegree.id,
-            name: `${selectedDegree.name} (Custom)`,
-            requirements,
-          }),
+      customRequirements.forEach((req) => {
+        requirements.push({
+          name: req.title,
+          amount: req.amount,
+          courseCodes: req.eligibleCourses,
+          facultyGroupIds: req.facultyGroupIds,
         });
+      });
+
+      await fetch(`/api/users/${userId}/degree`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          templateId: selectedDegree.id,
+          name: planName || selectedDegree.name,
+          requirements,
+        }),
+      });
+    }
+  };
+
+  const handleConfirmSelection = async () => {
+    if (!selectedDegree) return;
+
+    try {
+      if (isDirty) {
+        await persistDegree();
       }
-
-      onSelectDegree(selectedDegree.id, selectedDegree.name);
+      onSelectDegree();
       onClose();
     } catch (error) {
       console.error("Error saving degree selection:", error);
@@ -492,7 +562,7 @@ export default function DegreeModal({
 
           {/* Requirements Section - Always visible with fixed height */}
           <div className="border border-[var(--goose-ink)] p-6 md:p-8 rounded h-[280px] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-2">
               <h3 className="font-display text-xl font-bold text-[var(--goose-ink)]">
                 Requirements
               </h3>
@@ -505,6 +575,35 @@ export default function DegreeModal({
                 </button>
               )}
             </div>
+
+            {/* Editable plan name */}
+            {selectedDegree && isEditingRequirements && (
+              <div className="mb-4">
+                <label className="text-xs text-[var(--goose-slate)] block mb-1">Plan Name</label>
+                <input
+                  type="text"
+                  value={planName}
+                  onChange={(e) => setPlanName(e.target.value)}
+                  className="w-full border border-[var(--goose-ink)] px-3 py-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--goose-slate)]"
+                  placeholder="Enter plan name..."
+                />
+              </div>
+            )}
+            {selectedDegree && !isEditingRequirements && (
+              <p className="text-sm text-[var(--goose-slate)] mb-4 flex items-center gap-1">
+                {planName || selectedDegree.name}
+                <button
+                  onClick={() => { setIsEditingRequirements(true); }}
+                  className="text-[var(--goose-slate)] hover:text-[var(--goose-ink)] transition-colors"
+                  aria-label="Edit plan name"
+                  title="Edit"
+                >
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11.5 1.5l3 3L5 14H2v-3z" />
+                  </svg>
+                </button>
+              </p>
+            )}
 
             {/* Custom Requirement Form */}
             {isCreatingCustom ? (
@@ -542,17 +641,17 @@ export default function DegreeModal({
                     Eligible Course Groups
                   </label>
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {faculties.map((faculty) => (
+                    {faculties.filter((f) => f.name !== "N/A").map((faculty) => (
                       <button
-                        key={faculty}
-                        onClick={() => toggleFaculty(faculty)}
+                        key={faculty.name}
+                        onClick={() => toggleFaculty(faculty.name)}
                         className={`text-xs px-2 py-1 rounded border transition-colors ${
-                          selectedFaculties.includes(faculty)
+                          selectedFaculties.includes(faculty.name)
                             ? "bg-[var(--goose-ink)] text-[var(--goose-cream)] border-[var(--goose-ink)]"
                             : "border-[var(--goose-slate)] hover:bg-[var(--goose-mist)]/50"
                         }`}
                       >
-                        {faculty}
+                        {faculty.name} ({faculty._count.courses})
                       </button>
                     ))}
                   </div>
@@ -566,18 +665,25 @@ export default function DegreeModal({
                     <input
                       type="text"
                       value={courseSearchQuery}
-                      onChange={(e) => setCourseSearchQuery(e.target.value)}
+                      onChange={(e) => handleCourseSearch(e.target.value)}
                       onFocus={() => setIsCourseDropdownOpen(true)}
                       placeholder="Search courses..."
+                      autoComplete="off"
                       className="w-full border border-[var(--goose-ink)] px-3 py-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--goose-slate)]"
                     />
 
-                    {isCourseDropdownOpen && (
+                    {isCourseDropdownOpen && courseSearchQuery && (
                       <div
                         ref={courseDropdownRef}
                         className="absolute top-full left-0 right-0 mt-1 bg-[var(--goose-cream)] border border-[var(--goose-ink)] rounded shadow-lg z-30 max-h-40 overflow-y-auto"
                       >
-                        {filteredCourses.map((course) => (
+                        {isSearchingCourses && (
+                          <div className="p-2 text-xs text-[var(--goose-slate)] italic">Searching...</div>
+                        )}
+                        {!isSearchingCourses && courseSearchResults.length === 0 && (
+                          <div className="p-2 text-xs text-[var(--goose-slate)] italic">No courses found</div>
+                        )}
+                        {!isSearchingCourses && courseSearchResults.map((course) => (
                           <div
                             key={course.code}
                             onClick={() => toggleCourse(course.code)}
@@ -594,7 +700,7 @@ export default function DegreeModal({
                                 {course.code}
                               </div>
                               <div className="text-[10px] text-[var(--goose-slate)]">
-                                {course.name} ({course.faculty})
+                                {course.title}
                               </div>
                             </div>
                           </div>
@@ -717,7 +823,7 @@ export default function DegreeModal({
                               <ul className="mt-1 ml-4 list-disc text-xs text-[var(--goose-slate)]">
                                 {req.eligibleCourses
                                   .slice(0, 3)
-                                  .map((courseCode) => (
+                                  .map((courseCode: string) => (
                                     <li key={courseCode}>{courseCode}</li>
                                   ))}
                                 {req.eligibleCourses.length > 3 && (

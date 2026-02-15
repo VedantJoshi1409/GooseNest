@@ -19,7 +19,13 @@ export async function GET(request: NextRequest, { params }: Params) {
   const [entries, user] = await Promise.all([
     prisma.termCourse.findMany({
       where: { userId },
-      include: { course: true },
+      include: {
+        course: {
+          include: {
+            prereqs: { select: { prereqCode: true } },
+          },
+        },
+      },
     }),
     prisma.user.findUnique({
       where: { id: userId },
@@ -74,7 +80,13 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const entry = await prisma.termCourse.create({
     data: { userId, courseCode, term },
-    include: { course: true },
+    include: {
+      course: {
+        include: {
+          prereqs: { select: { prereqCode: true } },
+        },
+      },
+    },
   });
 
   return NextResponse.json(entry, { status: 201 });

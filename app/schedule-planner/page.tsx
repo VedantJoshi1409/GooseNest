@@ -1,10 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Navbar from "../components/Navbar";
 import CourseCard from "../components/CourseCard";
 
 interface Course {
+  code: string;
+  name: string;
+  prereqs: string[];
+}
+
+interface SearchResult {
   code: string;
   name: string;
 }
@@ -12,11 +18,16 @@ interface Course {
 interface TermCourseEntry {
   courseCode: string;
   term: string;
-  course: { code: string; title: string };
+  course: {
+    code: string;
+    title: string;
+    prereqs: { prereqCode: string }[];
+  };
 }
 
 const TERMS = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
 const USER_ID = 1;
+const SEARCH_CACHE_KEY = "goose_nest_course_search";
 
 export default function SchedulePlannerPage() {
   const [selectedTerm, setSelectedTerm] = useState<string>("1A");
@@ -27,7 +38,7 @@ export default function SchedulePlannerPage() {
   const [currentTerm, setCurrentTerm] = useState<string>("1A");
   const [editingCourse, setEditingCourse] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Course[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
@@ -41,6 +52,27 @@ export default function SchedulePlannerPage() {
 
   const isTermCompleted = (term: string) =>
     TERMS.indexOf(term) < TERMS.indexOf(currentTerm);
+
+  // Compute courses with no prerequisites met (prereqs exist but none in earlier terms)
+  const missingPrereqs = useMemo(() => {
+    const missing = new Set<string>();
+    // Build a set of all courses scheduled in each term or before
+    for (const term of TERMS) {
+      const termIndex = TERMS.indexOf(term);
+      const priorCourses = new Set<string>();
+      for (const t of TERMS) {
+        if (TERMS.indexOf(t) < termIndex) {
+          for (const c of courses[t]) priorCourses.add(c.code);
+        }
+      }
+      for (const course of courses[term]) {
+        if (course.prereqs.length > 0 && !course.prereqs.some((p) => priorCourses.has(p))) {
+          missing.add(course.code);
+        }
+      }
+    }
+    return missing;
+  }, [courses]);
 
   // Fetch schedule on mount
   useEffect(() => {
@@ -60,6 +92,7 @@ export default function SchedulePlannerPage() {
           grouped[entry.term].push({
             code: entry.course.code,
             name: entry.course.title,
+            prereqs: entry.course.prereqs.map((p) => p.prereqCode),
           });
         }
       }
@@ -68,16 +101,29 @@ export default function SchedulePlannerPage() {
     fetchSchedule();
   }, []);
 
-  // Debounced search
+  // Debounced search with sessionStorage caching
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    if (!value.trim()) {
+    const trimmed = value.trim().toLowerCase();
+    if (!trimmed) {
       setSearchResults([]);
       setIsSearching(false);
       return;
     }
+
+    // Check cache first
+    try {
+      const cache: Record<string, SearchResult[]> = JSON.parse(
+        sessionStorage.getItem(SEARCH_CACHE_KEY) || "{}"
+      );
+      if (cache[trimmed]) {
+        setSearchResults(cache[trimmed]);
+        setIsSearching(false);
+        return;
+      }
+    } catch {}
 
     setIsSearching(true);
     debounceRef.current = setTimeout(async () => {
@@ -88,12 +134,22 @@ export default function SchedulePlannerPage() {
         return;
       }
       const data: { code: string; title: string }[] = await res.json();
-      setSearchResults(data.map((c) => ({ code: c.code, name: c.title })));
+      const results = data.map((c) => ({ code: c.code, name: c.title }));
+      setSearchResults(results);
       setIsSearching(false);
+
+      // Cache the results
+      try {
+        const cache: Record<string, SearchResult[]> = JSON.parse(
+          sessionStorage.getItem(SEARCH_CACHE_KEY) || "{}"
+        );
+        cache[trimmed] = results;
+        sessionStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify(cache));
+      } catch {}
     }, 300);
   }, []);
 
-  const handleAddCourse = async (course: Course) => {
+  const handleAddCourse = async (course: Pick<Course, "code" | "name">) => {
     // Check if already in any term
     const alreadyScheduled = Object.values(courses).some((list) =>
       list.some((c) => c.code === course.code)
@@ -107,9 +163,12 @@ export default function SchedulePlannerPage() {
     });
     if (!res.ok) return;
 
+    const entry = await res.json();
+    const prereqs = (entry.course?.prereqs || []).map((p: { prereqCode: string }) => p.prereqCode);
+
     setCourses((prev) => ({
       ...prev,
-      [selectedTerm]: [...prev[selectedTerm], course],
+      [selectedTerm]: [...prev[selectedTerm], { ...course, prereqs }],
     }));
     setSearchQuery("");
     setSearchResults([]);
@@ -272,6 +331,7 @@ export default function SchedulePlannerPage() {
                   key={course.code}
                   course={course}
                   completed={isTermCompleted(selectedTerm)}
+                  missingPrereqs={missingPrereqs.has(course.code)}
                   isEditing={editingCourse === course.code}
                   onEdit={() => setEditingCourse(course.code)}
                   onMove={(targetTerm) => handleMoveCourse(course.code, targetTerm)}

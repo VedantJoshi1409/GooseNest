@@ -80,7 +80,34 @@ async function main() {
   }
   console.log(`Seeded ${prereqData.length} prerequisite links`);
 
-  // 5. Course Groups
+  // 5. Faculty-based course groups
+  const coursesByFaculty = new Map<string, string[]>();
+  for (const course of allCourses) {
+    if (!coursesByFaculty.has(course.faculty)) coursesByFaculty.set(course.faculty, []);
+    coursesByFaculty.get(course.faculty)!.push(course.id);
+  }
+
+  for (const [facultyName, courseCodes] of coursesByFaculty) {
+    const group = await prisma.courseGroup.create({
+      data: { name: `${facultyName} Courses` },
+    });
+
+    for (let i = 0; i < courseCodes.length; i += BATCH_SIZE) {
+      const batch = courseCodes.slice(i, i + BATCH_SIZE);
+      await prisma.courseGroupLink.createMany({
+        data: batch.map((code) => ({ groupId: group.id, courseCode: code })),
+      });
+    }
+
+    await prisma.faculty.update({
+      where: { name: facultyName },
+      data: { courseGroupId: group.id },
+    });
+
+    console.log(`Created faculty group "${group.name}" with ${courseCodes.length} courses (id: ${group.id})`);
+  }
+
+  // 6. Specific course groups
   const csCore = await prisma.courseGroup.create({
     data: { name: "CS Core Courses" },
   });
@@ -107,7 +134,7 @@ async function main() {
     ],
   });
 
-  // 6. Template
+  // 7. Template
   const template = await prisma.template.create({
     data: { name: "Computer Science, Honours, 2025" },
   });
@@ -129,7 +156,7 @@ async function main() {
     ],
   });
 
-  // 7. Seed user
+  // 8. Seed user
   const user = await prisma.user.create({
     data: { email: "test@uwaterloo.ca", name: "Test User" },
   });

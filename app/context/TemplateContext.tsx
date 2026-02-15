@@ -18,6 +18,7 @@ interface TemplateContextType {
   isLoading: boolean;
   error: string | null;
   selectTemplate: (templateId: number) => Promise<void>;
+  refreshFromDB: () => Promise<void>;
   clearTemplate: () => void;
 }
 
@@ -55,38 +56,60 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
     loadCachedData();
   }, []);
 
-  // Fetch all templates on mount (only if not cached)
+  // Fetch all templates and user's saved degree on mount
   useEffect(() => {
-    const fetchTemplates = async () => {
-      // Skip if we already have templates from cache
-      if (templates.length > 0) {
-        setIsLoading(false);
-        return;
-      }
-
+    const fetchInitialData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("/api/templates");
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch templates");
+        // Fetch templates list if not cached
+        if (templates.length === 0) {
+          const templatesRes = await fetch("/api/templates");
+          if (templatesRes.ok) {
+            const data = await templatesRes.json();
+            setTemplates(data);
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+          }
         }
 
-        const data = await response.json();
-        setTemplates(data);
+        // Load user's saved degree from DB if no template selected yet
+        // TODO: replace with actual user ID from auth
+        if (!selectedTemplate) {
+          const degreeRes = await fetch("/api/users/1/degree");
+          if (degreeRes.ok) {
+            const degreeData = await degreeRes.json();
+            let saved: TemplateWithRequirements | null = null;
 
-        // Cache the templates list
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            if (degreeData.type === "plan" && degreeData.plan) {
+              saved = {
+                id: degreeData.plan.templateId ?? degreeData.plan.id,
+                name: degreeData.plan.name,
+                requirements: degreeData.plan.requirements,
+              };
+            } else if (degreeData.type === "template" && degreeData.template) {
+              saved = {
+                id: degreeData.template.id,
+                name: degreeData.template.name,
+                requirements: degreeData.template.requirements,
+              };
+            }
+
+            if (saved) {
+              setSelectedTemplate(saved);
+              sessionStorage.setItem(SELECTED_TEMPLATE_KEY, JSON.stringify(saved));
+            }
+          }
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch templates");
-        console.error("Error fetching templates:", err);
+        setError(err instanceof Error ? err.message : "Failed to load data");
+        console.error("Error loading initial data:", err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchTemplates();
-  }, [templates.length]);
+    fetchInitialData();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectTemplate = async (templateId: number) => {
     try {
@@ -112,6 +135,43 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshFromDB = async () => {
+    try {
+      setIsLoading(true);
+      // TODO: replace with actual user ID from auth
+      const degreeRes = await fetch("/api/users/1/degree");
+      if (degreeRes.ok) {
+        const degreeData = await degreeRes.json();
+        let saved: TemplateWithRequirements | null = null;
+
+        if (degreeData.type === "plan" && degreeData.plan) {
+          saved = {
+            id: degreeData.plan.templateId ?? degreeData.plan.id,
+            name: degreeData.plan.name,
+            requirements: degreeData.plan.requirements,
+          };
+        } else if (degreeData.type === "template" && degreeData.template) {
+          saved = {
+            id: degreeData.template.id,
+            name: degreeData.template.name,
+            requirements: degreeData.template.requirements,
+          };
+        }
+
+        setSelectedTemplate(saved);
+        if (saved) {
+          sessionStorage.setItem(SELECTED_TEMPLATE_KEY, JSON.stringify(saved));
+        } else {
+          sessionStorage.removeItem(SELECTED_TEMPLATE_KEY);
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to refresh degree");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const clearTemplate = () => {
     setSelectedTemplate(null);
     sessionStorage.removeItem(SELECTED_TEMPLATE_KEY);
@@ -125,6 +185,7 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
         isLoading,
         error,
         selectTemplate,
+        refreshFromDB,
         clearTemplate,
       }}
     >

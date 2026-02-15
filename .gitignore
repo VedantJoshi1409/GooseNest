@@ -41,5 +41,6 @@ yarn-error.log*
 next-env.d.ts
 
 .mcp.json
+CLAUDE.md
 
 /app/generated/prisma

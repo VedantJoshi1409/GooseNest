@@ -81,25 +81,50 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   // Custom plan — create plan with requirements
-  // For requirements with courseCodes (custom ones), create a new CourseGroup first
   const planRequirements = [];
 
   for (const req of requirements) {
     let courseGroupId = req.courseGroupId;
 
-    if (!courseGroupId && req.courseCodes?.length > 0) {
-      // Create a new CourseGroup for this custom requirement
-      const group = await prisma.courseGroup.create({
-        data: {
-          name: req.name,
-          links: {
-            createMany: {
-              data: req.courseCodes.map((code: string) => ({ courseCode: code })),
-            },
-          },
-        },
-      });
-      courseGroupId = group.id;
+    if (!courseGroupId) {
+      const facultyGroupIds: number[] = req.facultyGroupIds || [];
+      const courseCodes: string[] = req.courseCodes || [];
+
+      if (facultyGroupIds.length === 1 && courseCodes.length === 0) {
+        // Single faculty, no extra courses — use the faculty group directly
+        courseGroupId = facultyGroupIds[0];
+      } else if (facultyGroupIds.length > 0 || courseCodes.length > 0) {
+        // Multiple faculties or extra courses — build a union group
+        const unionCodes = new Set<string>(courseCodes);
+
+        // Gather all courses from selected faculty groups
+        if (facultyGroupIds.length > 0) {
+          const facultyLinks = await prisma.courseGroupLink.findMany({
+            where: { groupId: { in: facultyGroupIds } },
+            select: { courseCode: true },
+          });
+          for (const link of facultyLinks) {
+            unionCodes.add(link.courseCode);
+          }
+        }
+
+        if (unionCodes.size > 0) {
+          const group = await prisma.courseGroup.create({
+            data: { name: req.name },
+          });
+          const codes = [...unionCodes];
+          const BATCH = 500;
+          for (let i = 0; i < codes.length; i += BATCH) {
+            await prisma.courseGroupLink.createMany({
+              data: codes.slice(i, i + BATCH).map((code) => ({
+                groupId: group.id,
+                courseCode: code,
+              })),
+            });
+          }
+          courseGroupId = group.id;
+        }
+      }
     }
 
     if (courseGroupId) {

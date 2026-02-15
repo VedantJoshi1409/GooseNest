@@ -12,8 +12,9 @@ const CourseGraph = dynamic(() => import("@/graph/CourseGraph"), {
 });
 
 export default function DegreePlannerPage() {
-  const { selectedTemplate, selectTemplate, isLoading } = useTemplate();
+  const { selectedTemplate, refreshFromDB, isLoading } = useTemplate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [degreeVersion, setDegreeVersion] = useState(0);
 
   const handleModifyClick = () => {
     setIsModalOpen(true);
@@ -23,8 +24,9 @@ export default function DegreePlannerPage() {
     setIsModalOpen(false);
   };
 
-  const handleSelectDegree = async (templateId: number, degreeName: string) => {
-    await selectTemplate(templateId);
+  const handleSelectDegree = async () => {
+    await refreshFromDB();
+    setDegreeVersion((v) => v + 1);
     setIsModalOpen(false);
   };
 
@@ -68,7 +70,7 @@ export default function DegreePlannerPage() {
       {/* Requirements Checklist + 3D Course Graph */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-8 py-4 flex gap-4 h-[calc(100vh-200px)]">
         <aside className="w-64 flex-shrink-0 border border-[var(--goose-mist)] rounded-lg overflow-hidden">
-          <RequirementsChecklist />
+          <RequirementsChecklist key={degreeVersion} />
         </aside>
         <div className="flex-1 border border-[var(--goose-mist)] rounded-lg overflow-hidden">
           <CourseGraph />

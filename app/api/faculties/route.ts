@@ -3,7 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
   const faculties = await prisma.faculty.findMany({
-    include: { courses: { select: { code: true, title: true } } },
+    select: {
+      name: true,
+      courseGroupId: true,
+      _count: { select: { courses: true } },
+    },
     orderBy: { name: "asc" },
   });
 

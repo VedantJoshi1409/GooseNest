@@ -10,6 +10,7 @@ interface Course {
 interface CourseCardProps {
   course: Course;
   completed: boolean;
+  missingPrereqs?: boolean;
   isEditing: boolean;
   onEdit: () => void;
   onMove: (targetTerm: string) => void;
@@ -22,6 +23,7 @@ const TERMS = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
 export default function CourseCard({
   course,
   completed,
+  missingPrereqs,
   isEditing,
   onEdit,
   onMove,
@@ -81,22 +83,32 @@ export default function CourseCard({
 
   return (
     <div ref={cardRef} className="relative">
-      <div className="border border-[var(--goose-mist)] hover:border-[var(--goose-ink)] p-4 rounded transition-colors">
+      <div className={`border p-4 rounded transition-colors ${missingPrereqs ? 'border-red-400 bg-red-50' : 'border-[var(--goose-mist)] hover:border-[var(--goose-ink)]'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {completed && (
+            {completed && !missingPrereqs && (
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-green-600 shrink-0">
                 <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" />
                 <path d="M6 10l3 3 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             )}
+            {missingPrereqs && (
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-red-500 shrink-0" aria-label="Missing prerequisites">
+                <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M10 6v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <circle cx="10" cy="14" r="1" fill="currentColor" />
+              </svg>
+            )}
             <div>
-              <div className={`font-display font-semibold ${completed ? 'text-[var(--goose-slate)]' : 'text-[var(--goose-ink)]'}`}>
+              <div className={`font-display font-semibold ${completed ? 'text-[var(--goose-slate)]' : missingPrereqs ? 'text-red-700' : 'text-[var(--goose-ink)]'}`}>
                 {course.code}
               </div>
-              <div className="text-sm text-[var(--goose-slate)] mt-1">
+              <div className={`text-sm mt-1 ${missingPrereqs ? 'text-red-500' : 'text-[var(--goose-slate)]'}`}>
                 {course.name}
               </div>
+              {missingPrereqs && (
+                <div className="text-xs text-red-500 mt-1">No prerequisites met</div>
+              )}
             </div>
           </div>
 

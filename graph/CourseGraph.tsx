@@ -68,6 +68,7 @@ export default function CourseGraph() {
 
   // Track current state for nodeColor callback
   const completedRef = useRef<Set<string>>(new Set());
+  const missingPrereqsRef = useRef<Set<string>>(new Set());
   const facultyIdsRef = useRef<Set<string>>(new Set());
 
   const loadData = useCallback(async () => {
@@ -98,12 +99,44 @@ export default function CourseGraph() {
     }
     completedRef.current = completedCourses;
 
+    // Build set of courses per term for prereq checking
+    const coursesByTerm = new Map<string, Set<string>>();
+    for (const entry of scheduleData.entries) {
+      if (!coursesByTerm.has(entry.term)) coursesByTerm.set(entry.term, new Set());
+      coursesByTerm.get(entry.term)!.add(entry.courseCode);
+    }
+
     // Fetch course nodes with prerequisite data
     const res = await fetch(
       `/api/graph?courses=${courseCodes.join(",")}&includeUnlocked=false`,
     );
     const rawData: GraphData = await res.json();
     const courseNodeIds = new Set(rawData.nodes.map((n) => n.id));
+
+    // Compute courses with no prerequisites met
+    const missingPrereqs = new Set<string>();
+    for (const node of rawData.nodes) {
+      if (node.prerequisites.length === 0) continue;
+      // Find which term this course is in
+      let courseTerm: string | null = null;
+      for (const entry of scheduleData.entries) {
+        if (entry.courseCode === node.id) { courseTerm = entry.term; break; }
+      }
+      if (!courseTerm) continue;
+      const courseTermIndex = TERMS.indexOf(courseTerm);
+      // Collect all courses in earlier terms
+      const priorCourses = new Set<string>();
+      for (const t of TERMS) {
+        if (TERMS.indexOf(t) < courseTermIndex) {
+          const tc = coursesByTerm.get(t);
+          if (tc) tc.forEach((c) => priorCourses.add(c));
+        }
+      }
+      if (!node.prerequisites.some((p) => priorCourses.has(p))) {
+        missingPrereqs.add(node.id);
+      }
+    }
+    missingPrereqsRef.current = missingPrereqs;
 
     // Group courses by faculty
     const facultyGroups = new Map<string, GraphNode[]>();
@@ -163,6 +196,7 @@ export default function CourseGraph() {
             const baseColor = FACULTY_COLORS[node.faculty] || "#888888";
             return mixWithWhite(baseColor, 0.7);
           }
+          if (missingPrereqsRef.current.has(node.id)) return "#ef4444";
           if (!completedRef.current.has(node.id)) return GREY;
           return FACULTY_COLORS[node.faculty] || "#888888";
         })
