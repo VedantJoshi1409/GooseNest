@@ -43,6 +43,31 @@ export default function RequirementsChecklist() {
   const [loading, setLoading] = useState(true);
   const [currentTerm, setCurrentTerm] = useState<string>("1A");
 
+  // Force-completed requirements (persisted in sessionStorage)
+  const [forceCompleted, setForceCompleted] = useState<Set<number>>(() => {
+    try {
+      const stored = sessionStorage.getItem("goose_nest_force_completed");
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const toggleForceComplete = (reqId: number) => {
+    setForceCompleted((prev) => {
+      const next = new Set(prev);
+      if (next.has(reqId)) {
+        next.delete(reqId);
+      } else {
+        next.add(reqId);
+      }
+      try {
+        sessionStorage.setItem("goose_nest_force_completed", JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
+  };
+
   // Add-course panel state
   const [addingToReq, setAddingToReq] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -307,6 +332,12 @@ export default function RequirementsChecklist() {
     ).length;
     return completed >= r.amount;
   }).length;
+  const totalForceCompleted = requirements.filter((r) => {
+    const completed = r.courseGroup.links.filter((l) =>
+      completedCourses.has(l.courseCode)
+    ).length;
+    return completed < r.amount && forceCompleted.has(r.id);
+  }).length;
   const totalFulfilledWithPlanned = requirements.filter((r) => {
     const completed = r.courseGroup.links.filter((l) =>
       completedCourses.has(l.courseCode)
@@ -314,7 +345,7 @@ export default function RequirementsChecklist() {
     const planned = r.courseGroup.links.filter((l) =>
       plannedCourses.has(l.courseCode)
     ).length;
-    return completed + planned >= r.amount;
+    return completed + planned >= r.amount && !forceCompleted.has(r.id);
   }).length - totalFulfilled;
 
   return (
@@ -328,7 +359,10 @@ export default function RequirementsChecklist() {
         </p>
       )}
       <p className="text-xs text-[var(--goose-slate)] mb-4">
-        {totalFulfilled}/{totalRequirements} completed
+        {totalFulfilled + totalForceCompleted}/{totalRequirements} completed
+        {totalForceCompleted > 0 && (
+          <span className="text-amber-600"> ({totalForceCompleted} overridden)</span>
+        )}
         {totalFulfilledWithPlanned > 0 && (
           <span className="text-blue-600"> (+{totalFulfilledWithPlanned} planned)</span>
         )}
@@ -344,20 +378,27 @@ export default function RequirementsChecklist() {
             plannedCourses.has(l.courseCode)
           );
           const fulfilled = completed.length >= req.amount;
-          const fulfilledWithPlanned = completed.length + planned.length >= req.amount;
+          const isForced = !fulfilled && forceCompleted.has(req.id);
+          const fulfilledWithPlanned = !isForced && completed.length + planned.length >= req.amount;
           const isAdding = addingToReq === req.id;
 
           return (
             <div key={req.id}>
               <div className="flex items-center gap-2 mb-1">
-                <div
-                  className={`w-4 h-4 rounded-sm border flex items-center justify-center flex-shrink-0 ${
+                <button
+                  onClick={() => { if (!fulfilled) toggleForceComplete(req.id); }}
+                  disabled={fulfilled}
+                  className={`w-4 h-4 rounded-sm border flex items-center justify-center flex-shrink-0 transition-colors ${
                     fulfilled
-                      ? "bg-[var(--goose-ink)] border-[var(--goose-ink)]"
-                      : fulfilledWithPlanned
-                        ? "bg-blue-500 border-blue-500"
-                        : "border-[var(--goose-slate)]"
+                      ? "bg-[var(--goose-ink)] border-[var(--goose-ink)] cursor-default"
+                      : isForced
+                        ? "bg-amber-500 border-amber-500 cursor-pointer hover:bg-amber-600"
+                        : fulfilledWithPlanned
+                          ? "bg-blue-500 border-blue-500 cursor-pointer hover:bg-blue-600"
+                          : "border-[var(--goose-slate)] cursor-pointer hover:border-[var(--goose-ink)] hover:bg-[var(--goose-mist)]/30"
                   }`}
+                  aria-label={isForced ? `Unmark ${req.courseGroup.name} as complete` : `Mark ${req.courseGroup.name} as complete`}
+                  title={isForced ? "Click to unmark override" : fulfilled ? "Completed" : "Click to mark as complete (override)"}
                 >
                   {fulfilled && (
                     <svg
@@ -373,7 +414,21 @@ export default function RequirementsChecklist() {
                       <path d="M2 6l3 3 5-5" />
                     </svg>
                   )}
-                  {!fulfilled && fulfilledWithPlanned && (
+                  {isForced && (
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M2 6l3 3 5-5" />
+                    </svg>
+                  )}
+                  {!fulfilled && !isForced && fulfilledWithPlanned && (
                     <svg
                       width="10"
                       height="10"
@@ -387,17 +442,20 @@ export default function RequirementsChecklist() {
                       <path d="M2 6h8" />
                     </svg>
                   )}
-                </div>
+                </button>
                 <span
                   className={`text-sm font-medium flex-1 ${
-                    fulfilled
+                    fulfilled || isForced
                       ? "text-[var(--goose-slate)] line-through"
                       : "text-[var(--goose-ink)]"
                   }`}
                 >
                   {req.courseGroup.name}
+                  {isForced && (
+                    <span className="text-[10px] text-amber-600 ml-1 no-underline inline-block">(overridden)</span>
+                  )}
                 </span>
-                {!fulfilled && (
+                {!fulfilled && !isForced && (
                   <button
                     onClick={() => {
                       if (isAdding) {

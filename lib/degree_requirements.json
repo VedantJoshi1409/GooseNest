@@ -256,23 +256,28 @@
       {
         "amount": 1,
         "options": [
-          "AMATH271"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "AMATH333",
-          "AMATH343",
-          "AMATH345",
-          "AMATH361",
-          "AMATH362",
-          "AMATH373",
-          "AMATH382",
-          "AMATH383",
-          "AMATH390",
-          "AMATH391",
-          "PMATH343"
+          {
+            "amount": 1,
+            "options": [
+              "AMATH271"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "AMATH333",
+              "AMATH343",
+              "AMATH345",
+              "AMATH361",
+              "AMATH362",
+              "AMATH373",
+              "AMATH382",
+              "AMATH383",
+              "AMATH390",
+              "AMATH391",
+              "PMATH343"
+            ]
+          }
         ]
       },
       {
@@ -744,17 +749,22 @@
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "PHYS111",
-          "PHYS111L"
-        ]
-      },
-      {
-        "amount": 2,
-        "options": [
-          "PHYS121",
-          "PHYS121L"
+          {
+            "amount": 2,
+            "options": [
+              "PHYS111",
+              "PHYS111L"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "PHYS121",
+              "PHYS121L"
+            ]
+          }
         ]
       }
     ]
@@ -952,22 +962,27 @@
         ]
       },
       {
-        "amount": 2,
-        "options": [
-          "CHEM494A",
-          "CHEM494B"
-        ]
-      },
-      {
         "amount": 1,
         "options": [
-          "CHEM224L",
-          "CHEM310L",
-          "CHEM350L",
-          "CHEM360L"
+          {
+            "amount": 2,
+            "options": [
+              "CHEM494A",
+              "CHEM494B"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "CHEM224L",
+              "CHEM310L",
+              "CHEM350L",
+              "CHEM360L"
+            ]
+          },
+          "Complete 1 additional course from the list of Approved Courses below"
         ]
       },
-      "Complete 1 additional course from the list of Approved Courses below",
       {
         "amount": 1,
         "options": [
@@ -993,31 +1008,41 @@
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "PHYS111",
-          "PHYS111L"
+          {
+            "amount": 2,
+            "options": [
+              "PHYS111",
+              "PHYS111L"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "PHYS121",
+              "PHYS121L"
+            ]
+          }
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "PHYS121",
-          "PHYS121L"
-        ]
-      },
-      {
-        "amount": 2,
-        "options": [
-          "PHYS112",
-          "PHYS112L"
-        ]
-      },
-      {
-        "amount": 2,
-        "options": [
-          "PHYS122",
-          "PHYS122L"
+          {
+            "amount": 2,
+            "options": [
+              "PHYS112",
+              "PHYS112L"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "PHYS122",
+              "PHYS122L"
+            ]
+          }
         ]
       },
       "Complete 1 additional course from the following subject codes: AMATH, CO, MATH, PMATH, STAT",
@@ -1071,31 +1096,41 @@
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "PHYS111",
-          "PHYS111L"
+          {
+            "amount": 2,
+            "options": [
+              "PHYS111",
+              "PHYS111L"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "PHYS121",
+              "PHYS121L"
+            ]
+          }
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "PHYS121",
-          "PHYS121L"
-        ]
-      },
-      {
-        "amount": 2,
-        "options": [
-          "PHYS112",
-          "PHYS112L"
-        ]
-      },
-      {
-        "amount": 2,
-        "options": [
-          "PHYS122",
-          "PHYS122L"
+          {
+            "amount": 2,
+            "options": [
+              "PHYS112",
+              "PHYS112L"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "PHYS122",
+              "PHYS122L"
+            ]
+          }
         ]
       },
       "Complete 1.25 units from the following list of courses.",
@@ -1113,25 +1148,30 @@
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "CHEM494A",
-          "CHEM494B"
-        ]
-      },
-      "Complete 0.5 unit in additional CHEM courses",
-      "Complete 0.5 unit from the following list of CHEM courses",
-      {
-        "amount": 8,
-        "options": [
-          "CHEM200",
-          "CHEM220L",
-          "CHEM224L",
-          "CHEM265L",
-          "CHEM310L",
-          "CHEM313L",
-          "CHEM335L",
-          "CHEM360L"
+          {
+            "amount": 2,
+            "options": [
+              "CHEM494A",
+              "CHEM494B"
+            ]
+          },
+          "Complete 0.5 unit in additional CHEM courses",
+          "Complete 0.5 unit from the following list of CHEM courses",
+          {
+            "amount": 8,
+            "options": [
+              "CHEM200",
+              "CHEM220L",
+              "CHEM224L",
+              "CHEM265L",
+              "CHEM310L",
+              "CHEM313L",
+              "CHEM335L",
+              "CHEM360L"
+            ]
+          }
         ]
       },
       {
@@ -1466,23 +1506,28 @@
       {
         "amount": 1,
         "options": [
-          "CO351",
-          "CO353",
-          "CO367"
-        ]
-      },
-      "If CO255 is taken, the following courses can be used towards this requirement:",
-      {
-        "amount": 1,
-        "options": [
-          "CO450",
-          "CO452",
-          "CO454",
-          "CO456",
-          "CO459",
-          "CO463",
-          "CO466",
-          "CO471"
+          {
+            "amount": 1,
+            "options": [
+              "CO351",
+              "CO353",
+              "CO367"
+            ]
+          },
+          "If CO255 is taken, the following courses can be used towards this requirement:",
+          {
+            "amount": 1,
+            "options": [
+              "CO450",
+              "CO452",
+              "CO454",
+              "CO456",
+              "CO459",
+              "CO463",
+              "CO466",
+              "CO471"
+            ]
+          }
         ]
       },
       {
@@ -1661,16 +1706,21 @@
       {
         "amount": 1,
         "options": [
-          "COMMST220",
-          "THPERF220"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "BLKST224",
-          "COMMST224",
-          "THPERF224"
+          {
+            "amount": 1,
+            "options": [
+              "COMMST220",
+              "THPERF220"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "BLKST224",
+              "COMMST224",
+              "THPERF224"
+            ]
+          }
         ]
       },
       "Complete 1.5 units at the 400-level from the following subject codes: COMMST, DAC",
@@ -1695,16 +1745,21 @@
       {
         "amount": 1,
         "options": [
-          "COMMST220",
-          "THPERF220"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "BLKST224",
-          "COMMST224",
-          "THPERF224"
+          {
+            "amount": 1,
+            "options": [
+              "COMMST220",
+              "THPERF220"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "BLKST224",
+              "COMMST224",
+              "THPERF224"
+            ]
+          }
         ]
       },
       "Complete 1.5 units at the 400-level from the following subject codes: COMMST, DAC",
@@ -1728,16 +1783,21 @@
       {
         "amount": 1,
         "options": [
-          "COMMST220",
-          "THPERF220"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "BLKST224",
-          "COMMST224",
-          "THPERF224"
+          {
+            "amount": 1,
+            "options": [
+              "COMMST220",
+              "THPERF220"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "BLKST224",
+              "COMMST224",
+              "THPERF224"
+            ]
+          }
         ]
       },
       "Complete 1.5 units at the 400-level from the following subject codes: COMMST, DAC",
@@ -2068,13 +2128,18 @@
       },
       "Complete 3 additional CS courses chosen from CS340-CS398, CS440-CS489",
       "Complete 2 additional CS courses chosen from CS440-CS489",
-      "Complete 1 course from the following: CS440-CS498, any CS course at the 600- or 700-level (see Additional Constraints)",
       {
         "amount": 1,
         "options": [
-          "CO487",
-          "CS499T",
-          "STAT440"
+          "Complete 1 course from the following: CS440-CS498, any CS course at the 600- or 700-level (see Additional Constraints)",
+          {
+            "amount": 1,
+            "options": [
+              "CO487",
+              "CS499T",
+              "STAT440"
+            ]
+          }
         ]
       },
       "Complete a total of 5.0 units of non-math courses satisfying the Breadth and Depth Requirement listed under Graduation Requirements"
@@ -2403,8 +2468,13 @@
           "PHIL215"
         ]
       },
-      "Complete 1.0 unit of additional AFM courses at the 300-level or above, and CFM401 if not taken to fulfil a requirement above.",
-      "Complete 1.5 units of additional AFM courses at the 300-level or above.",
+      {
+        "amount": 1,
+        "options": [
+          "Complete 1.0 unit of additional AFM courses at the 300-level or above, and CFM401 if not taken to fulfil a requirement above.",
+          "Complete 1.5 units of additional AFM courses at the 300-level or above."
+        ]
+      },
       {
         "amount": 1,
         "options": [
@@ -2414,17 +2484,22 @@
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "CS136",
-          "CS136L"
-        ]
-      },
-      {
-        "amount": 2,
-        "options": [
-          "CS136L",
-          "CS146"
+          {
+            "amount": 2,
+            "options": [
+              "CS136",
+              "CS136L"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "CS136L",
+              "CS146"
+            ]
+          }
         ]
       },
       {
@@ -2455,11 +2530,16 @@
           "CS246E"
         ]
       },
-      "Complete 1 additional course from: CS440-CS498.",
       {
         "amount": 1,
         "options": [
-          "CO487"
+          "Complete 1 additional course from: CS440-CS498.",
+          {
+            "amount": 1,
+            "options": [
+              "CO487"
+            ]
+          }
         ]
       },
       "Complete 2 additional courses from: CO487, CS251 or CS251E, CS340-CS398, CS440-CS498.",
@@ -2586,49 +2666,54 @@
       {
         "amount": 1,
         "options": [
-          "CS480"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "CS448",
-          "CS454",
-          "CS484",
-          "CS485",
-          "CS486"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "CS485"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "CS448",
-          "CS454",
-          "CS480",
-          "CS484",
-          "CS486"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "CS486"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "CS448",
-          "CS454",
-          "CS480",
-          "CS484",
-          "CS485"
+          {
+            "amount": 1,
+            "options": [
+              "CS480"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "CS448",
+              "CS454",
+              "CS484",
+              "CS485",
+              "CS486"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "CS485"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "CS448",
+              "CS454",
+              "CS480",
+              "CS484",
+              "CS486"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "CS486"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "CS448",
+              "CS454",
+              "CS480",
+              "CS484",
+              "CS485"
+            ]
+          }
         ]
       },
       {
@@ -2708,13 +2793,18 @@
         ]
       },
       "Complete 1 additional CS courses chosen from CS340-CS398, CS440-CS489.",
-      "Choose any course from the following: CS440-CS498, any CS course at the 600- or 700-level (see Additional Constraints)",
       {
-        "amount": 3,
+        "amount": 1,
         "options": [
-          "CO487",
-          "CS499T",
-          "STAT440"
+          "Choose any course from the following: CS440-CS498, any CS course at the 600- or 700-level (see Additional Constraints)",
+          {
+            "amount": 3,
+            "options": [
+              "CO487",
+              "CS499T",
+              "STAT440"
+            ]
+          }
         ]
       },
       "Complete a total of 5.0 units of non-math courses satisfying the Breadth and Depth Requirement listed under Graduation Requirements"
@@ -2905,10 +2995,15 @@
       {
         "amount": 1,
         "options": [
-          "EARTH436B"
+          {
+            "amount": 1,
+            "options": [
+              "EARTH436B"
+            ]
+          },
+          "Complete 1 additional EARTH course at the 300-level or above"
         ]
       },
-      "Complete 1 additional EARTH course at the 300-level or above",
       {
         "amount": 1,
         "options": [
@@ -2917,31 +3012,41 @@
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "PHYS111",
-          "PHYS111L"
+          {
+            "amount": 2,
+            "options": [
+              "PHYS111",
+              "PHYS111L"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "PHYS121",
+              "PHYS121L"
+            ]
+          }
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "PHYS121",
-          "PHYS121L"
-        ]
-      },
-      {
-        "amount": 2,
-        "options": [
-          "PHYS112",
-          "PHYS112L"
-        ]
-      },
-      {
-        "amount": 2,
-        "options": [
-          "PHYS122",
-          "PHYS122L"
+          {
+            "amount": 2,
+            "options": [
+              "PHYS112",
+              "PHYS112L"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "PHYS122",
+              "PHYS122L"
+            ]
+          }
         ]
       },
       "Complete 1 additional course from the following subject codes: AMATH, BIOL, CHEM, CS, MATH, MNS, PHYS, STAT",
@@ -3020,36 +3125,51 @@
       {
         "amount": 1,
         "options": [
-          "EARTH436B"
-        ]
-      },
-      "Complete 1 additional EARTH course at the 300-level or above",
-      {
-        "amount": 2,
-        "options": [
-          "PHYS111",
-          "PHYS111L"
-        ]
-      },
-      {
-        "amount": 2,
-        "options": [
-          "PHYS121",
-          "PHYS121L"
+          {
+            "amount": 1,
+            "options": [
+              "EARTH436B"
+            ]
+          },
+          "Complete 1 additional EARTH course at the 300-level or above"
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "PHYS112",
-          "PHYS112L"
+          {
+            "amount": 2,
+            "options": [
+              "PHYS111",
+              "PHYS111L"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "PHYS121",
+              "PHYS121L"
+            ]
+          }
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "PHYS122",
-          "PHYS122L"
+          {
+            "amount": 2,
+            "options": [
+              "PHYS112",
+              "PHYS112L"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "PHYS122",
+              "PHYS122L"
+            ]
+          }
         ]
       },
       "Complete 3 additional courses from the following subject codes: AMATH, BIOL, CHEM, CS, MATH, MNS, PHYS, STAT",
@@ -3122,22 +3242,32 @@
       {
         "amount": 1,
         "options": [
-          "EARTH436B"
-        ]
-      },
-      "Complete 1 additional EARTH course at the 300-level or above",
-      {
-        "amount": 2,
-        "options": [
-          "PHYS111",
-          "PHYS111L"
+          {
+            "amount": 1,
+            "options": [
+              "EARTH436B"
+            ]
+          },
+          "Complete 1 additional EARTH course at the 300-level or above"
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "PHYS121",
-          "PHYS121L"
+          {
+            "amount": 2,
+            "options": [
+              "PHYS111",
+              "PHYS111L"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "PHYS121",
+              "PHYS121L"
+            ]
+          }
         ]
       },
       {
@@ -5177,17 +5307,22 @@
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "ENBUS409A",
-          "ENBUS409B"
-        ]
-      },
-      {
-        "amount": 2,
-        "options": [
-          "ENVS403A",
-          "ENVS403B"
+          {
+            "amount": 2,
+            "options": [
+              "ENBUS409A",
+              "ENBUS409B"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "ENVS403A",
+              "ENVS403B"
+            ]
+          }
         ]
       }
     ]
@@ -5218,15 +5353,20 @@
       {
         "amount": 1,
         "options": [
-          "ERS402"
-        ]
-      },
-      "Complete 1 additional ERS course at the 300-level or above",
-      {
-        "amount": 2,
-        "options": [
-          "ERS403A",
-          "ERS403B"
+          {
+            "amount": 1,
+            "options": [
+              "ERS402"
+            ]
+          },
+          "Complete 1 additional ERS course at the 300-level or above",
+          {
+            "amount": 2,
+            "options": [
+              "ERS403A",
+              "ERS403B"
+            ]
+          }
         ]
       },
       "Complete 2.0 units of additional ERS courses",
@@ -5390,10 +5530,15 @@
       {
         "amount": 1,
         "options": [
-          "EARTH436B"
+          {
+            "amount": 1,
+            "options": [
+              "EARTH436B"
+            ]
+          },
+          "Complete 1 additional EARTH course at the 300-level or above"
         ]
       },
-      "Complete 1 additional EARTH course at the 300-level or above",
       "Complete 3 additional courses from the following subject codes: AMATH, BIOL, CHEM, CS, MATH, MNS, PHYS, STAT",
       "Complete 1 additional course from the following subject codes: AMATH, CHEM, CS, MATH, PHYS",
       "Complete 1 additional course from the following subject codes: AMATH, CS, MATH, PHYS, STAT",
@@ -5534,30 +5679,40 @@
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "FINE243",
-          "FINE343"
-        ]
-      },
-      "Complete 0.5 unit from FINE or VCULT courses.",
-      {
-        "amount": 2,
-        "options": [
-          "FINE309",
-          "FINE312",
-          "FINE315"
+          {
+            "amount": 2,
+            "options": [
+              "FINE243",
+              "FINE343"
+            ]
+          },
+          "Complete 0.5 unit from FINE or VCULT courses."
         ]
       },
       {
         "amount": 1,
         "options": [
-          "FINE309",
-          "FINE312",
-          "FINE315"
+          {
+            "amount": 2,
+            "options": [
+              "FINE309",
+              "FINE312",
+              "FINE315"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "FINE309",
+              "FINE312",
+              "FINE315"
+            ]
+          },
+          "Complete 0.5 unit from FINE studio courses at the 300-level."
         ]
-      },
-      "Complete 0.5 unit from FINE studio courses at the 300-level."
+      }
     ]
   },
   "Fine Arts - Studio Practice (Bachelor of Arts - Honours)": {
@@ -5603,22 +5758,27 @@
         ]
       },
       {
-        "amount": 2,
-        "options": [
-          "FINE309",
-          "FINE312",
-          "FINE315"
-        ]
-      },
-      {
         "amount": 1,
         "options": [
-          "FINE309",
-          "FINE312",
-          "FINE315"
+          {
+            "amount": 2,
+            "options": [
+              "FINE309",
+              "FINE312",
+              "FINE315"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "FINE309",
+              "FINE312",
+              "FINE315"
+            ]
+          },
+          "Complete 0.5 unit from FINE studio courses at the 300-level."
         ]
-      },
-      "Complete 0.5 unit from FINE studio courses at the 300-level."
+      }
     ]
   },
   "French (Bachelor of Arts - Four-Year General)": {
@@ -6110,14 +6270,19 @@
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "GEOG490A",
-          "GEOG490B"
+          {
+            "amount": 2,
+            "options": [
+              "GEOG490A",
+              "GEOG490B"
+            ]
+          },
+          "Complete 5.0 units of elective courses.",
+          "Complete 6.5 units of elective courses."
         ]
-      },
-      "Complete 5.0 units of elective courses.",
-      "Complete 6.5 units of elective courses."
+      }
     ]
   },
   "German (Bachelor of Arts - Honours)": {
@@ -6423,36 +6588,41 @@
         ]
       },
       {
-        "amount": 1,
+        "amount": 3,
         "options": [
-          "HIST253",
-          "HIST254",
-          "HIST269"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "HIST257",
-          "HIST258"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "HIST260",
-          "HIST262",
-          "HIST263",
-          "MEDVL260"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "HIST268",
-          "HIST271",
-          "HIST274",
-          "HIST275"
+          {
+            "amount": 1,
+            "options": [
+              "HIST253",
+              "HIST254",
+              "HIST269"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "HIST257",
+              "HIST258"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "HIST260",
+              "HIST262",
+              "HIST263",
+              "MEDVL260"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "HIST268",
+              "HIST271",
+              "HIST274",
+              "HIST275"
+            ]
+          }
         ]
       },
       "Complete 1.5 units of the following list of HIST topics courses (see Additional Constraints).",
@@ -6544,36 +6714,41 @@
         ]
       },
       {
-        "amount": 1,
+        "amount": 3,
         "options": [
-          "HIST253",
-          "HIST254",
-          "HIST269"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "HIST257",
-          "HIST258"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "HIST260",
-          "HIST262",
-          "HIST263",
-          "MEDVL260"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "HIST268",
-          "HIST271",
-          "HIST274",
-          "HIST275"
+          {
+            "amount": 1,
+            "options": [
+              "HIST253",
+              "HIST254",
+              "HIST269"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "HIST257",
+              "HIST258"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "HIST260",
+              "HIST262",
+              "HIST263",
+              "MEDVL260"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "HIST268",
+              "HIST271",
+              "HIST274",
+              "HIST275"
+            ]
+          }
         ]
       },
       "Complete 1.5 units of the following list of HIST topics courses.",
@@ -6665,36 +6840,41 @@
         ]
       },
       {
-        "amount": 1,
+        "amount": 2,
         "options": [
-          "HIST253",
-          "HIST254",
-          "HIST269"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "HIST257",
-          "HIST258"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "HIST260",
-          "HIST262",
-          "HIST263",
-          "MEDVL260"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "HIST268",
-          "HIST271",
-          "HIST274",
-          "HIST275"
+          {
+            "amount": 1,
+            "options": [
+              "HIST253",
+              "HIST254",
+              "HIST269"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "HIST257",
+              "HIST258"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "HIST260",
+              "HIST262",
+              "HIST263",
+              "MEDVL260"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "HIST268",
+              "HIST271",
+              "HIST274",
+              "HIST275"
+            ]
+          }
         ]
       }
     ]
@@ -7381,25 +7561,40 @@
       {
         "amount": 1,
         "options": [
-          "AFM101"
+          {
+            "amount": 1,
+            "options": [
+              "AFM101"
+            ]
+          },
+          "Complete all the following: BUS127W"
         ]
       },
-      "Complete all the following: BUS127W",
       {
         "amount": 1,
         "options": [
-          "AFM102"
+          {
+            "amount": 1,
+            "options": [
+              "AFM102"
+            ]
+          },
+          "Complete all the following: BUS247W"
         ]
       },
-      "Complete all the following: BUS247W",
       {
         "amount": 1,
         "options": [
-          "AFM131",
-          "ARBUS101"
+          {
+            "amount": 1,
+            "options": [
+              "AFM131",
+              "ARBUS101"
+            ]
+          },
+          "Complete all the following: BUS111W"
         ]
       },
-      "Complete all the following: BUS111W",
       {
         "amount": 1,
         "options": [
@@ -7438,35 +7633,55 @@
       {
         "amount": 1,
         "options": [
-          "ECON101"
+          {
+            "amount": 1,
+            "options": [
+              "ECON101"
+            ]
+          },
+          "Complete all the following: ECON120W"
         ]
       },
-      "Complete all the following: ECON120W",
       {
         "amount": 1,
         "options": [
-          "ECON102"
+          {
+            "amount": 1,
+            "options": [
+              "ECON102"
+            ]
+          },
+          "Complete all the following: ECON140W"
         ]
       },
-      "Complete all the following: ECON140W",
       {
         "amount": 1,
         "options": [
-          "ECON201"
+          {
+            "amount": 1,
+            "options": [
+              "ECON201"
+            ]
+          },
+          "Complete all the following: ECON260W"
         ]
       },
-      "Complete all the following: ECON260W",
       {
         "amount": 1,
         "options": [
-          "MATH247"
-        ]
-      },
-      {
-        "amount": 2,
-        "options": [
-          "MATH237",
-          "PMATH333"
+          {
+            "amount": 1,
+            "options": [
+              "MATH247"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "MATH237",
+              "PMATH333"
+            ]
+          }
         ]
       }
     ]
@@ -7662,14 +7877,19 @@
       {
         "amount": 1,
         "options": [
-          "AMATH373"
-        ]
-      },
-      {
-        "amount": 2,
-        "options": [
-          "PHYS234",
-          "PHYS334"
+          {
+            "amount": 1,
+            "options": [
+              "AMATH373"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "PHYS234",
+              "PHYS334"
+            ]
+          }
         ]
       },
       {
@@ -8106,17 +8326,22 @@
       {
         "amount": 1,
         "options": [
-          "ARBUS202",
-          "COMM400",
-          "LS271",
-          "LS319",
-          "PACS202",
-          "PACS323",
-          "PHIL215",
-          "PSYCH339"
+          {
+            "amount": 1,
+            "options": [
+              "ARBUS202",
+              "COMM400",
+              "LS271",
+              "LS319",
+              "PACS202",
+              "PACS323",
+              "PHIL215",
+              "PSYCH339"
+            ]
+          },
+          "Complete 1 additional 0.5-unit course from the following subject codes: AFM, BUS, COMM, ECON, HRM, MSE, PSCI, STV"
         ]
       },
-      "Complete 1 additional 0.5-unit course from the following subject codes: AFM, BUS, COMM, ECON, HRM, MSE, PSCI, STV",
       "Complete 3 additional 0.5-unit math courses from the following subject codes: ACTSC, AMATH, CO, CS, MATBUS, MATH, PMATH, STAT",
       "Complete 1 additional 0.5-unit COMM course at the 300- or 400-level",
       "Complete 1 additional 0.5-unit BUS or COMM course at the 300- or 400-level",
@@ -8304,15 +8529,20 @@
       {
         "amount": 1,
         "options": [
-          "COMM103",
-          "ECON100"
-        ]
-      },
-      {
-        "amount": 2,
-        "options": [
-          "ECON101",
-          "ECON102"
+          {
+            "amount": 1,
+            "options": [
+              "COMM103",
+              "ECON100"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "ECON101",
+              "ECON102"
+            ]
+          }
         ]
       },
       {
@@ -8443,20 +8673,25 @@
         ]
       },
       {
-        "amount": 2,
-        "options": [
-          "STAT330",
-          "STAT333"
-        ]
-      },
-      "Complete 1 additional math course (0.5 unit) at the 300- or 400-level from the following subject codes: ACTSC, AMATH, CO, CS, MATBUS, MATH, PMATH, STAT",
-      {
         "amount": 1,
         "options": [
-          "STAT334"
+          {
+            "amount": 2,
+            "options": [
+              "STAT330",
+              "STAT333"
+            ]
+          },
+          "Complete 1 additional math course (0.5 unit) at the 300- or 400-level from the following subject codes: ACTSC, AMATH, CO, CS, MATBUS, MATH, PMATH, STAT",
+          {
+            "amount": 1,
+            "options": [
+              "STAT334"
+            ]
+          },
+          "Complete 2 additional math courses (1.0 unit) at the 300- or 400-level from the following subject codes: ACTSC, AMATH, CO, CS, MATBUS, MATH, PMATH, STAT"
         ]
-      },
-      "Complete 2 additional math courses (1.0 unit) at the 300- or 400-level from the following subject codes: ACTSC, AMATH, CO, CS, MATBUS, MATH, PMATH, STAT"
+      }
     ]
   },
   "Mathematics/Financial Analysis and Risk Management - Professional Risk Management Specialization (Bachelor of Mathematics - Honours)": {
@@ -8517,20 +8752,25 @@
         ]
       },
       {
-        "amount": 2,
-        "options": [
-          "STAT330",
-          "STAT333"
-        ]
-      },
-      "Complete 1 additional math course (0.5 unit) at the 300- or 400-level from the following subject codes: ACTSC, AMATH, CO, CS, MATBUS, MATH, PMATH, STAT",
-      {
         "amount": 1,
         "options": [
-          "STAT334"
+          {
+            "amount": 2,
+            "options": [
+              "STAT330",
+              "STAT333"
+            ]
+          },
+          "Complete 1 additional math course (0.5 unit) at the 300- or 400-level from the following subject codes: ACTSC, AMATH, CO, CS, MATBUS, MATH, PMATH, STAT",
+          {
+            "amount": 1,
+            "options": [
+              "STAT334"
+            ]
+          },
+          "Complete 2 additional math courses (1.0 unit) at the 300- or 400-level from the following subject codes: ACTSC, AMATH, CO, CS, MATBUS, MATH, PMATH, STAT"
         ]
-      },
-      "Complete 2 additional math courses (1.0 unit) at the 300- or 400-level from the following subject codes: ACTSC, AMATH, CO, CS, MATBUS, MATH, PMATH, STAT"
+      }
     ]
   },
   "Mechanical Engineering (Bachelor of Applied Science - Honours)": {
@@ -8616,31 +8856,41 @@
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "PHYS111",
-          "PHYS111L"
+          {
+            "amount": 2,
+            "options": [
+              "PHYS111",
+              "PHYS111L"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "PHYS121",
+              "PHYS121L"
+            ]
+          }
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "PHYS121",
-          "PHYS121L"
-        ]
-      },
-      {
-        "amount": 2,
-        "options": [
-          "PHYS112",
-          "PHYS112L"
-        ]
-      },
-      {
-        "amount": 2,
-        "options": [
-          "PHYS122",
-          "PHYS122L"
+          {
+            "amount": 2,
+            "options": [
+              "PHYS112",
+              "PHYS112L"
+            ]
+          },
+          {
+            "amount": 2,
+            "options": [
+              "PHYS122",
+              "PHYS122L"
+            ]
+          }
         ]
       }
     ]
@@ -9270,25 +9520,30 @@
       {
         "amount": 1,
         "options": [
-          "PSCI424"
+          {
+            "amount": 1,
+            "options": [
+              "PSCI424"
+            ]
+          },
+          "Complete 2 additional PSCI seminars or field courses at the 400-level",
+          {
+            "amount": 1,
+            "options": [
+              "PSCI400"
+            ]
+          },
+          "Complete 1 additional PSCI seminar or field course at the 400-level.",
+          {
+            "amount": 2,
+            "options": [
+              "PSCI499A",
+              "PSCI499B"
+            ]
+          },
+          "Complete 1 additional PSCI seminar or field course at the 400-level"
         ]
       },
-      "Complete 2 additional PSCI seminars or field courses at the 400-level",
-      {
-        "amount": 1,
-        "options": [
-          "PSCI400"
-        ]
-      },
-      "Complete 1 additional PSCI seminar or field course at the 400-level.",
-      {
-        "amount": 2,
-        "options": [
-          "PSCI499A",
-          "PSCI499B"
-        ]
-      },
-      "Complete 1 additional PSCI seminar or field course at the 400-level",
       "Complete 4.5 units of PSCI courses at the 200-level or above",
       "Complete additional units of PSCI courses at any level to a total of 8.0 units"
     ]
@@ -9326,25 +9581,30 @@
       {
         "amount": 1,
         "options": [
-          "PSCI424"
+          {
+            "amount": 1,
+            "options": [
+              "PSCI424"
+            ]
+          },
+          "Complete 2 additional PSCI seminars or field courses at the 400-level",
+          {
+            "amount": 1,
+            "options": [
+              "PSCI400"
+            ]
+          },
+          "Complete 1 additional PSCI seminar or field course at the 400-level",
+          {
+            "amount": 2,
+            "options": [
+              "PSCI499A",
+              "PSCI499B"
+            ]
+          },
+          "Complete 1 additional PSCI seminar or field course at the 400-level"
         ]
       },
-      "Complete 2 additional PSCI seminars or field courses at the 400-level",
-      {
-        "amount": 1,
-        "options": [
-          "PSCI400"
-        ]
-      },
-      "Complete 1 additional PSCI seminar or field course at the 400-level",
-      {
-        "amount": 2,
-        "options": [
-          "PSCI499A",
-          "PSCI499B"
-        ]
-      },
-      "Complete 1 additional PSCI seminar or field course at the 400-level",
       "Complete 4.5 units of PSCI courses at the 200-level or above",
       "Complete additional units of PSCI courses at any level to a total of 8.0 units"
     ]
@@ -9919,65 +10179,80 @@
       {
         "amount": 2,
         "options": [
-          "BIOL110",
-          "BIOL130",
-          "BIOL150",
-          "BIOL165",
-          "BIOL201",
-          "BIOL211",
-          "BIOL220",
-          "BIOL239",
-          "BIOL240",
-          "BIOL241",
-          "BIOL251",
-          "BIOL266",
-          "BIOL273"
-        ]
-      },
-      "Complete associated labs if selected lecture has an associated lab course",
-      {
-        "amount": 4,
-        "options": [
-          "CHEM120",
-          "CHEM120L",
-          "CHEM123",
-          "CHEM123L"
-        ]
-      },
-      {
-        "amount": 4,
-        "options": [
-          "CHEM121",
-          "CHEM121L",
-          "CHEM125",
-          "CHEM125L"
-        ]
-      },
-      {
-        "amount": 4,
-        "options": [
-          "EARTH121",
-          "EARTH121L",
-          "EARTH122",
-          "EARTH122L"
-        ]
-      },
-      {
-        "amount": 4,
-        "options": [
-          "PHYS111",
-          "PHYS111L",
-          "PHYS112",
-          "PHYS112L"
-        ]
-      },
-      {
-        "amount": 4,
-        "options": [
-          "PHYS121",
-          "PHYS121L",
-          "PHYS122",
-          "PHYS122L"
+          {
+            "amount": 2,
+            "options": [
+              "BIOL110",
+              "BIOL130",
+              "BIOL150",
+              "BIOL165",
+              "BIOL201",
+              "BIOL211",
+              "BIOL220",
+              "BIOL239",
+              "BIOL240",
+              "BIOL241",
+              "BIOL251",
+              "BIOL266",
+              "BIOL273"
+            ]
+          },
+          "Complete associated labs if selected lecture has an associated lab course",
+          {
+            "amount": 1,
+            "options": [
+              {
+                "amount": 4,
+                "options": [
+                  "CHEM120",
+                  "CHEM120L",
+                  "CHEM123",
+                  "CHEM123L"
+                ]
+              },
+              {
+                "amount": 4,
+                "options": [
+                  "CHEM121",
+                  "CHEM121L",
+                  "CHEM125",
+                  "CHEM125L"
+                ]
+              }
+            ]
+          },
+          {
+            "amount": 4,
+            "options": [
+              "EARTH121",
+              "EARTH121L",
+              "EARTH122",
+              "EARTH122L"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              {
+                "amount": 4,
+                "options": [
+                  "PHYS111",
+                  "PHYS111L",
+                  "PHYS112",
+                  "PHYS112L"
+                ]
+              },
+              {
+                "amount": 4,
+                "options": [
+                  "PHYS121",
+                  "PHYS121L",
+                  "PHYS122",
+                  "PHYS122L"
+                ]
+              }
+            ]
+          }
         ]
       },
       {
@@ -9997,65 +10272,80 @@
       {
         "amount": 2,
         "options": [
-          "BIOL110",
-          "BIOL130",
-          "BIOL150",
-          "BIOL165",
-          "BIOL201",
-          "BIOL211",
-          "BIOL220",
-          "BIOL239",
-          "BIOL240",
-          "BIOL241",
-          "BIOL251",
-          "BIOL266",
-          "BIOL273"
-        ]
-      },
-      "Complete associated labs if selected lecture has an associated lab course",
-      {
-        "amount": 4,
-        "options": [
-          "CHEM120",
-          "CHEM120L",
-          "CHEM123",
-          "CHEM123L"
-        ]
-      },
-      {
-        "amount": 4,
-        "options": [
-          "CHEM121",
-          "CHEM121L",
-          "CHEM125",
-          "CHEM125L"
-        ]
-      },
-      {
-        "amount": 4,
-        "options": [
-          "EARTH121",
-          "EARTH121L",
-          "EARTH122",
-          "EARTH122L"
-        ]
-      },
-      {
-        "amount": 4,
-        "options": [
-          "PHYS111",
-          "PHYS111L",
-          "PHYS112",
-          "PHYS112L"
-        ]
-      },
-      {
-        "amount": 4,
-        "options": [
-          "PHYS121",
-          "PHYS121L",
-          "PHYS122",
-          "PHYS122L"
+          {
+            "amount": 2,
+            "options": [
+              "BIOL110",
+              "BIOL130",
+              "BIOL150",
+              "BIOL165",
+              "BIOL201",
+              "BIOL211",
+              "BIOL220",
+              "BIOL239",
+              "BIOL240",
+              "BIOL241",
+              "BIOL251",
+              "BIOL266",
+              "BIOL273"
+            ]
+          },
+          "Complete associated labs if selected lecture has an associated lab course",
+          {
+            "amount": 1,
+            "options": [
+              {
+                "amount": 4,
+                "options": [
+                  "CHEM120",
+                  "CHEM120L",
+                  "CHEM123",
+                  "CHEM123L"
+                ]
+              },
+              {
+                "amount": 4,
+                "options": [
+                  "CHEM121",
+                  "CHEM121L",
+                  "CHEM125",
+                  "CHEM125L"
+                ]
+              }
+            ]
+          },
+          {
+            "amount": 4,
+            "options": [
+              "EARTH121",
+              "EARTH121L",
+              "EARTH122",
+              "EARTH122L"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              {
+                "amount": 4,
+                "options": [
+                  "PHYS111",
+                  "PHYS111L",
+                  "PHYS112",
+                  "PHYS112L"
+                ]
+              },
+              {
+                "amount": 4,
+                "options": [
+                  "PHYS121",
+                  "PHYS121L",
+                  "PHYS122",
+                  "PHYS122L"
+                ]
+              }
+            ]
+          }
         ]
       },
       {
@@ -10099,54 +10389,64 @@
       {
         "amount": 2,
         "options": [
-          "BIOL110",
-          "BIOL130",
-          "BIOL201",
-          "BIOL211",
-          "BIOL220",
-          "BIOL239",
-          "BIOL240",
-          "BIOL241",
-          "BIOL251",
-          "BIOL266",
-          "BIOL273"
-        ]
-      },
-      "Complete one additional BIOL 0.5 unit, any level",
-      {
-        "amount": 4,
-        "options": [
-          "CHEM120",
-          "CHEM120L",
-          "CHEM123",
-          "CHEM123L"
-        ]
-      },
-      {
-        "amount": 4,
-        "options": [
-          "EARTH121",
-          "EARTH121L",
-          "EARTH122",
-          "EARTH122L"
-        ]
-      },
-      {
-        "amount": 4,
-        "options": [
-          "PHYS111",
-          "PHYS111L",
-          "PHYS112",
-          "PHYS112L"
-        ]
-      },
-      {
-        "amount": 4,
-        "options": [
-          "PHYS121",
-          "PHYS121L",
-          "PHYS122",
-          "PHYS122L"
+          {
+            "amount": 2,
+            "options": [
+              "BIOL110",
+              "BIOL130",
+              "BIOL201",
+              "BIOL211",
+              "BIOL220",
+              "BIOL239",
+              "BIOL240",
+              "BIOL241",
+              "BIOL251",
+              "BIOL266",
+              "BIOL273"
+            ]
+          },
+          "Complete one additional BIOL 0.5 unit, any level",
+          {
+            "amount": 4,
+            "options": [
+              "CHEM120",
+              "CHEM120L",
+              "CHEM123",
+              "CHEM123L"
+            ]
+          },
+          {
+            "amount": 4,
+            "options": [
+              "EARTH121",
+              "EARTH121L",
+              "EARTH122",
+              "EARTH122L"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              {
+                "amount": 4,
+                "options": [
+                  "PHYS111",
+                  "PHYS111L",
+                  "PHYS112",
+                  "PHYS112L"
+                ]
+              },
+              {
+                "amount": 4,
+                "options": [
+                  "PHYS121",
+                  "PHYS121L",
+                  "PHYS122",
+                  "PHYS122L"
+                ]
+              }
+            ]
+          }
         ]
       },
       {
@@ -10224,54 +10524,59 @@
         ]
       },
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "BIOL110",
-          "BIOL130",
-          "BIOL150",
-          "BIOL165",
-          "BIOL201",
-          "BIOL211",
-          "BIOL220",
-          "BIOL239",
-          "BIOL240",
-          "BIOL241",
-          "BIOL251",
-          "BIOL266",
-          "BIOL273"
+          {
+            "amount": 2,
+            "options": [
+              "BIOL110",
+              "BIOL130",
+              "BIOL150",
+              "BIOL165",
+              "BIOL201",
+              "BIOL211",
+              "BIOL220",
+              "BIOL239",
+              "BIOL240",
+              "BIOL241",
+              "BIOL251",
+              "BIOL266",
+              "BIOL273"
+            ]
+          },
+          "Complete 1.0 unit of additional Science lecture or labs, any level",
+          {
+            "amount": 4,
+            "options": [
+              "EARTH121",
+              "EARTH121L",
+              "EARTH122",
+              "EARTH122L"
+            ]
+          },
+          "Complete 0.5 unit of additional Science lecture or labs, any level",
+          {
+            "amount": 4,
+            "options": [
+              "PHYS111",
+              "PHYS111L",
+              "PHYS112",
+              "PHYS112L"
+            ]
+          },
+          "Complete 0.5 unit of additional Science lecture or labs, any level",
+          {
+            "amount": 4,
+            "options": [
+              "PHYS121",
+              "PHYS121L",
+              "PHYS122",
+              "PHYS122L"
+            ]
+          },
+          "Complete 0.5 unit of additional Science lecture or labs, any level"
         ]
-      },
-      "Complete 1.0 unit of additional Science lecture or labs, any level",
-      {
-        "amount": 4,
-        "options": [
-          "EARTH121",
-          "EARTH121L",
-          "EARTH122",
-          "EARTH122L"
-        ]
-      },
-      "Complete 0.5 unit of additional Science lecture or labs, any level",
-      {
-        "amount": 4,
-        "options": [
-          "PHYS111",
-          "PHYS111L",
-          "PHYS112",
-          "PHYS112L"
-        ]
-      },
-      "Complete 0.5 unit of additional Science lecture or labs, any level",
-      {
-        "amount": 4,
-        "options": [
-          "PHYS121",
-          "PHYS121L",
-          "PHYS122",
-          "PHYS122L"
-        ]
-      },
-      "Complete 0.5 unit of additional Science lecture or labs, any level"
+      }
     ]
   },
   "Science and Business - Biochemistry Specialization (Bachelor of Science - Honours)": {
@@ -10353,19 +10658,24 @@
         ]
       },
       {
-        "amount": 3,
+        "amount": 1,
         "options": [
-          "CHEM264",
-          "CHEM265",
-          "CHEM265L"
-        ]
-      },
-      {
-        "amount": 3,
-        "options": [
-          "CHEM266",
-          "CHEM266L",
-          "CHEM267"
+          {
+            "amount": 3,
+            "options": [
+              "CHEM264",
+              "CHEM265",
+              "CHEM265L"
+            ]
+          },
+          {
+            "amount": 3,
+            "options": [
+              "CHEM266",
+              "CHEM266L",
+              "CHEM267"
+            ]
+          }
         ]
       },
       {
@@ -10795,15 +11105,20 @@
       },
       "Complete 1.5 additional units of SOC courses at the 200-level",
       "Complete 1.5 additional units of SOC courses at the 300-level",
-      "Complete 1.5 additional units of SOC courses at the 400-level",
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "SOC499A",
-          "SOC499B"
+          "Complete 1.5 additional units of SOC courses at the 400-level",
+          {
+            "amount": 2,
+            "options": [
+              "SOC499A",
+              "SOC499B"
+            ]
+          },
+          "Complete 0.5 additional unit of SOC courses at the 400-level"
         ]
-      },
-      "Complete 0.5 additional unit of SOC courses at the 400-level"
+      }
     ]
   },
   "Sociology (Bachelor of Arts - Honours)": {
@@ -10858,15 +11173,20 @@
       },
       "Complete 1.5 additional units of SOC courses at the 200-level",
       "Complete 1.5 additional units of SOC courses at the 300-level",
-      "Complete 1.5 additional units of SOC courses at the 400-level",
       {
-        "amount": 2,
+        "amount": 1,
         "options": [
-          "SOC499A",
-          "SOC499B"
+          "Complete 1.5 additional units of SOC courses at the 400-level",
+          {
+            "amount": 2,
+            "options": [
+              "SOC499A",
+              "SOC499B"
+            ]
+          },
+          "Complete 0.5 additional unit of SOC courses at the 400-level"
         ]
-      },
-      "Complete 0.5 additional unit of SOC courses at the 400-level"
+      }
     ]
   },
   "Sociology (Bachelor of Arts - Three-Year General)": {
@@ -10889,15 +11209,20 @@
       {
         "amount": 1,
         "options": [
-          "LS280",
-          "SOC280"
-        ]
-      },
-      {
-        "amount": 1,
-        "options": [
-          "LS322",
-          "SOC322"
+          {
+            "amount": 1,
+            "options": [
+              "LS280",
+              "SOC280"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "LS322",
+              "SOC322"
+            ]
+          }
         ]
       },
       {
@@ -11083,13 +11408,18 @@
       },
       "Complete 2 STAT courses at the 400-level",
       "Complete 1 additional STAT course at the 300- or 400-level",
-      "Complete 1 additional STAT course at the 400-level",
       {
         "amount": 1,
         "options": [
-          "CS457",
-          "CS485",
-          "CS486"
+          "Complete 1 additional STAT course at the 400-level",
+          {
+            "amount": 1,
+            "options": [
+              "CS457",
+              "CS485",
+              "CS486"
+            ]
+          }
         ]
       },
       "Complete 4 additional courses at the 300- or 400-level from: ACTSC, AMATH, CO, CS, MATBUS, MATH, PMATH, STAT",
