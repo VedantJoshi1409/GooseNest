@@ -33,10 +33,10 @@ export default function CourseSearch({ onSearch }: CourseSearchProps) {
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="AFM101, CS135, MATH145..."
-        className="w-full px-3 py-2 bg-gray-800 text-white rounded border border-gray-700 focus:border-blue-500 focus:outline-none text-sm mb-3"
+        className="w-full px-3 py-2 bg-[var(--goose-cream)] text-[var(--goose-ink)] rounded border border-[var(--goose-ink)] focus:ring-2 focus:ring-[var(--goose-slate)] focus:outline-none text-sm mb-3"
       />
 
-      <label className="flex items-center gap-2 cursor-pointer text-white hover:text-blue-300 mb-3">
+      <label className="flex items-center gap-2 cursor-pointer text-[var(--goose-ink)] hover:text-[var(--goose-slate)] mb-3">
         <input
           type="checkbox"
           checked={includeUnlocked}
@@ -48,7 +48,7 @@ export default function CourseSearch({ onSearch }: CourseSearchProps) {
 
       <button
         onClick={handleSearch}
-        className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium"
+        className="w-full px-3 py-2 bg-[var(--goose-ink)] hover:bg-[var(--goose-slate)] text-[var(--goose-cream)] rounded text-sm font-display font-medium transition-colors"
       >
         Search
       </button>

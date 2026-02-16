@@ -57,7 +57,14 @@ async function main() {
     const title = c.title.includes(" - ")
       ? c.title.substring(c.title.indexOf(" - ") + 3)
       : c.title;
-    return { code: c.id, title, facultyName: c.faculty };
+    return {
+      code: c.id,
+      title,
+      description: c.description || null,
+      subject: c.subject || null,
+      level: c.level || null,
+      facultyName: c.faculty,
+    };
   });
 
   for (let i = 0; i < courseData.length; i += BATCH_SIZE) {

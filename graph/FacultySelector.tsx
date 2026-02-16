@@ -39,13 +39,13 @@ export default function FacultySelector({
       <div className="flex gap-2 mb-3">
         <button
           onClick={selectAll}
-          className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
+          className="text-xs px-2 py-1 bg-[var(--goose-ink)] hover:bg-[var(--goose-slate)] text-[var(--goose-cream)] rounded transition-colors"
         >
           All
         </button>
         <button
           onClick={clearAll}
-          className="text-xs px-2 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded"
+          className="text-xs px-2 py-1 border border-[var(--goose-ink)] text-[var(--goose-ink)] hover:bg-[var(--goose-mist)]/30 rounded transition-colors"
         >
           Clear
         </button>
@@ -54,7 +54,7 @@ export default function FacultySelector({
         {FACULTIES.map((faculty) => (
           <label
             key={faculty.id}
-            className="flex items-center gap-2 cursor-pointer text-white hover:text-blue-300"
+            className="flex items-center gap-2 cursor-pointer text-[var(--goose-ink)] hover:text-[var(--goose-slate)]"
           >
             <input
               type="checkbox"

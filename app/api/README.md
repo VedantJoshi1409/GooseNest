@@ -6,7 +6,7 @@
 |--------|-------|-------------|
 | GET | `/api/courses?faculty=MAT` | List all courses, optionally filter by faculty |
 | POST | `/api/courses` | Create a course with optional prerequisites |
-| GET | `/api/courses/[code]` | Get a course with prereqs, unlocks, and groups |
+| GET | `/api/courses/[code]` | Get a course with description, prereqs, unlocks, and groups |
 | PUT | `/api/courses/[code]` | Update title, faculty, or prerequisites |
 | DELETE | `/api/courses/[code]` | Delete a course |
 
@@ -19,6 +19,12 @@
   "prerequisites": ["CS100"]
 }
 ```
+
+## Course Search
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/courses/search?q=cs1` | Search courses by code or title (case-insensitive, max 20 results) |
 
 ## Faculties
 
@@ -95,3 +101,87 @@
 |--------|-------|-------------|
 | GET | `/api/graph?faculties=MAT,ENG` | Get graph data filtered by faculties |
 | GET | `/api/graph?courses=CS135&includeUnlocked=true` | Get graph data for specific courses |
+
+## User Schedule
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/users/[id]/schedule` | Get user's full schedule with current term and all term courses |
+| POST | `/api/users/[id]/schedule` | Add a course to a term |
+| PUT | `/api/users/[id]/schedule` | Move a course to a different term |
+| PATCH | `/api/users/[id]/schedule` | Update user's current term |
+| DELETE | `/api/users/[id]/schedule` | Remove a course from the schedule |
+
+**POST body:**
+```json
+{
+  "courseCode": "CS145",
+  "term": "1A"
+}
+```
+
+**PUT body:**
+```json
+{
+  "courseCode": "CS145",
+  "term": "2A"
+}
+```
+
+**PATCH body:**
+```json
+{
+  "currentTerm": "1B"
+}
+```
+
+**DELETE body:**
+```json
+{
+  "courseCode": "CS145"
+}
+```
+
+## User Degree
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/users/[id]/degree` | Get user's degree config (template or custom plan) |
+| POST | `/api/users/[id]/degree` | Set user's degree template or create a custom plan |
+
+**POST body (template only):**
+```json
+{
+  "templateId": 1
+}
+```
+
+**POST body (custom plan):**
+```json
+{
+  "templateId": 1,
+  "name": "My Custom Plan",
+  "requirements": [
+    {
+      "name": "CS Core",
+      "amount": 3,
+      "courseGroupId": 1
+    }
+  ]
+}
+```
+
+## User Degree Courses
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/users/[id]/degree/courses` | Add a course to a requirement group (copy-on-write) |
+| DELETE | `/api/users/[id]/degree/courses` | Remove a course from a requirement group (copy-on-write) |
+
+**POST/DELETE body:**
+```json
+{
+  "courseGroupId": 1,
+  "courseCode": "CS245"
+}
+```

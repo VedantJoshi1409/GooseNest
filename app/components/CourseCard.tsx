@@ -7,6 +7,15 @@ interface Course {
   name: string;
 }
 
+interface CourseDetail {
+  description: string | null;
+  subject: string | null;
+  level: number | null;
+  facultyName: string;
+  prereqs: { prereqCode: string; prereq: { code: string; title: string } }[];
+  unlocks: { courseCode: string; course: { code: string; title: string } }[];
+}
+
 interface CourseCardProps {
   course: Course;
   completed: boolean;
@@ -31,6 +40,9 @@ export default function CourseCard({
   onCancelEdit
 }: CourseCardProps) {
   const [showTermSubmenu, setShowTermSubmenu] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [courseDetail, setCourseDetail] = useState<CourseDetail | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Close edit menu when clicking outside
@@ -49,22 +61,44 @@ export default function CourseCard({
   // Close edit menu on Escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isEditing) {
-        onCancelEdit();
-        setShowTermSubmenu(false);
+      if (e.key === 'Escape') {
+        if (isEditing) {
+          onCancelEdit();
+          setShowTermSubmenu(false);
+        }
+        if (expanded) {
+          setExpanded(false);
+        }
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isEditing, onCancelEdit]);
+  }, [isEditing, onCancelEdit, expanded]);
 
-  const handleEditClick = () => {
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (isEditing) {
       onCancelEdit();
       setShowTermSubmenu(false);
     } else {
       onEdit();
+    }
+  };
+
+  const handleCardClick = () => {
+    if (isEditing) return;
+    const willExpand = !expanded;
+    setExpanded(willExpand);
+
+    if (willExpand && !courseDetail) {
+      setLoadingDetail(true);
+      fetch(`/api/courses/${encodeURIComponent(course.code)}`)
+        .then((res) => res.ok ? res.json() : null)
+        .then((data) => {
+          if (data) setCourseDetail(data);
+        })
+        .finally(() => setLoadingDetail(false));
     }
   };
 
@@ -83,7 +117,16 @@ export default function CourseCard({
 
   return (
     <div ref={cardRef} className="relative">
-      <div className={`border p-4 rounded transition-colors ${missingPrereqs ? 'border-red-400 bg-red-50' : 'border-[var(--goose-mist)] hover:border-[var(--goose-ink)]'}`}>
+      <div
+        onClick={handleCardClick}
+        className={`border p-4 rounded transition-colors cursor-pointer ${
+          missingPrereqs
+            ? 'border-red-400 bg-red-50'
+            : expanded
+              ? 'border-[var(--goose-ink)] bg-[var(--goose-cream)]'
+              : 'border-[var(--goose-mist)] hover:border-[var(--goose-ink)]'
+        }`}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {completed && !missingPrereqs && (
@@ -112,25 +155,113 @@ export default function CourseCard({
             </div>
           </div>
 
-          {/* Edit button */}
-          <button
-            onClick={handleEditClick}
-            className="text-[var(--goose-ink)] hover:text-[var(--goose-slate)] transition-colors p-2"
-            aria-label="Edit course"
-            aria-expanded={isEditing}
-          >
+          <div className="flex items-center gap-1">
+            {/* Expand/collapse indicator */}
             <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="currentColor"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className={`text-[var(--goose-slate)] transition-transform ${expanded ? 'rotate-180' : ''}`}
             >
-              <circle cx="10" cy="4" r="1.5" />
-              <circle cx="10" cy="10" r="1.5" />
-              <circle cx="10" cy="16" r="1.5" />
+              <path d="M4 6l4 4 4-4" />
             </svg>
-          </button>
+
+            {/* Edit button */}
+            <button
+              onClick={handleEditClick}
+              className="text-[var(--goose-ink)] hover:text-[var(--goose-slate)] transition-colors p-2"
+              aria-label="Edit course"
+              aria-expanded={isEditing}
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <circle cx="10" cy="4" r="1.5" />
+                <circle cx="10" cy="10" r="1.5" />
+                <circle cx="10" cy="16" r="1.5" />
+              </svg>
+            </button>
+          </div>
         </div>
+
+        {/* Expanded course info dropdown */}
+        {expanded && (
+          <div className="mt-4 pt-4 border-t border-[var(--goose-mist)]" onClick={(e) => e.stopPropagation()}>
+            {loadingDetail ? (
+              <p className="text-[var(--goose-slate)] italic text-sm">Loading course details...</p>
+            ) : courseDetail ? (
+              <div className="space-y-3 text-sm">
+                {/* Subject & Faculty */}
+                <div className="flex flex-wrap gap-2">
+                  {courseDetail.subject && (
+                    <span className="px-2 py-0.5 rounded text-xs font-display bg-[var(--goose-mist)]/40 text-[var(--goose-ink)]">
+                      {courseDetail.subject}
+                    </span>
+                  )}
+                  {courseDetail.level && (
+                    <span className="px-2 py-0.5 rounded text-xs font-display bg-[var(--goose-mist)]/40 text-[var(--goose-ink)]">
+                      Level {courseDetail.level}
+                    </span>
+                  )}
+                </div>
+
+                {/* Description */}
+                {courseDetail.description && (
+                  <p className="text-[var(--goose-ink)] leading-relaxed">
+                    {courseDetail.description}
+                  </p>
+                )}
+
+                {/* Prerequisites */}
+                {courseDetail.prereqs.length > 0 && (
+                  <div>
+                    <h4 className="font-display font-semibold text-[var(--goose-ink)] mb-1">Prerequisites</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {courseDetail.prereqs.map((p) => (
+                        <span
+                          key={p.prereqCode}
+                          className="px-2 py-0.5 rounded text-xs font-display border border-[var(--goose-mist)] text-[var(--goose-slate)]"
+                        >
+                          {p.prereqCode}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Unlocks */}
+                {courseDetail.unlocks.length > 0 && (
+                  <div>
+                    <h4 className="font-display font-semibold text-[var(--goose-ink)] mb-1">Unlocks</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {courseDetail.unlocks.map((u) => (
+                        <span
+                          key={u.courseCode}
+                          className="px-2 py-0.5 rounded text-xs font-display border border-[var(--goose-mist)] text-[var(--goose-slate)]"
+                        >
+                          {u.courseCode}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* No extra info fallback */}
+                {!courseDetail.description && courseDetail.prereqs.length === 0 && courseDetail.unlocks.length === 0 && (
+                  <p className="text-[var(--goose-slate)] italic">No additional information available for this course.</p>
+                )}
+              </div>
+            ) : (
+              <p className="text-[var(--goose-slate)] italic text-sm">Failed to load course details.</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Edit dropdown menu */}

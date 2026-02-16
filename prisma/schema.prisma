@@ -61,8 +61,11 @@ model Faculty {
 }
 
 model Course {
-  code  String @id
-  title String
+  code        String  @id
+  title       String
+  description String?
+  subject     String?
+  level       Int?
 
   facultyName String
   faculty     Faculty @relation(fields: [facultyName], references: [name])

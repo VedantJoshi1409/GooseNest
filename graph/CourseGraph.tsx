@@ -41,7 +41,7 @@ function mixWithWhite(hex: string, amount: number): string {
   return `#${newR.toString(16).padStart(2, "0")}${newG.toString(16).padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
 }
 
-const GREY = "#666666";
+const GREY = "#6d8196";
 const TERMS = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
 const ROOT_ID = "__root__";
 
@@ -191,10 +191,10 @@ export default function CourseGraph() {
         .graphData(data)
         .nodeLabel("title")
         .nodeColor((node: any) => {
-          if (node.id === ROOT_ID) return "#ffffff";
+          if (node.id === ROOT_ID) return "#4a4a4a";
           if (facultyIdsRef.current.has(node.id)) {
             const baseColor = FACULTY_COLORS[node.faculty] || "#888888";
-            return mixWithWhite(baseColor, 0.7);
+            return mixWithWhite(baseColor, 0.4);
           }
           if (missingPrereqsRef.current.has(node.id)) return "#ef4444";
           if (!completedRef.current.has(node.id)) return GREY;
@@ -205,16 +205,45 @@ export default function CourseGraph() {
           if (facultyIdsRef.current.has(node.id)) return 12;
           return 4;
         })
-        .backgroundColor("#050510")
+        .linkColor((link: any) => {
+          const target = typeof link.target === "object" ? link.target : null;
+          if (target) {
+            const color = FACULTY_COLORS[target.faculty];
+            if (color) {
+              const r = parseInt(color.slice(1, 3), 16);
+              const g = parseInt(color.slice(3, 5), 16);
+              const b = parseInt(color.slice(5, 7), 16);
+              return `rgba(${r}, ${g}, ${b}, 0.45)`;
+            }
+          }
+          return "rgba(109, 129, 150, 0.4)";
+        })
+        .linkWidth(1.5)
+        .backgroundColor("#ffffe3")
         .onNodeClick((node) => {
           setSelectedNode(node as GraphNode);
         });
 
       graphRef.current?.cameraPosition(
         { x: 0, y: 0, z: 300 },
-        { x: 150, y: -50, z: 0 },
+        { x: 0, y: 0, z: 0 },
         0,
       );
+
+      // Lock orbit target to root node and constrain zoom
+      const controls = graphRef.current?.controls() as any;
+      if (controls) {
+        controls.enablePan = false;
+        controls.maxDistance = 800;
+        controls.minDistance = 50;
+      }
+
+      // Keep orbit target locked to root node origin
+      graphRef.current?.onEngineTick(() => {
+        if (controls) {
+          controls.target.set(0, 0, 0);
+        }
+      });
     }
   }, []);
 
@@ -226,6 +255,25 @@ export default function CourseGraph() {
     channel.onmessage = () => loadData();
     return () => channel.close();
   }, [loadData]);
+
+  // Keep canvas sized to container
+  useEffect(() => {
+    const container = ref.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (graphRef.current && width > 0 && height > 0) {
+          graphRef.current.width(width);
+          graphRef.current.height(height);
+        }
+      }
+    });
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="relative w-full h-full">

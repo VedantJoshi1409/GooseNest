@@ -15,29 +15,29 @@ export default function ModeToggle({
 }: ModeToggleProps) {
   return (
     <div className="absolute top-4 right-4 z-20">
-      <div className="flex bg-gray-900/90 rounded-t-lg overflow-hidden">
+      <div className="flex bg-[var(--goose-cream)] border border-[var(--goose-ink)] rounded-t-lg overflow-hidden">
         <button
           onClick={() => onChange("faculty")}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
+          className={`px-4 py-2 text-sm font-display font-medium transition-colors ${
             mode === "faculty"
-              ? "bg-blue-600 text-white"
-              : "bg-transparent text-gray-300 hover:text-white"
+              ? "bg-[var(--goose-ink)] text-[var(--goose-cream)]"
+              : "bg-transparent text-[var(--goose-slate)] hover:text-[var(--goose-ink)]"
           }`}
         >
           Faculties
         </button>
         <button
           onClick={() => onChange("search")}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
+          className={`px-4 py-2 text-sm font-display font-medium transition-colors ${
             mode === "search"
-              ? "bg-blue-600 text-white"
-              : "bg-transparent text-gray-300 hover:text-white"
+              ? "bg-[var(--goose-ink)] text-[var(--goose-cream)]"
+              : "bg-transparent text-[var(--goose-slate)] hover:text-[var(--goose-ink)]"
           }`}
         >
           Search
         </button>
       </div>
-      <div className="bg-gray-900/90 p-4 rounded-b-lg shadow-lg">
+      <div className="bg-[var(--goose-cream)] border border-t-0 border-[var(--goose-ink)] p-4 rounded-b-lg shadow-lg">
         {children}
       </div>
     </div>
