@@ -42,14 +42,19 @@ model Plan {
 }
 
 model PlanRequirement {
-  id            Int    @id @default(autoincrement())
-  name          String
-  amount        Int
-  courseGroupId Int
-  planId        Int
+  id             Int     @id @default(autoincrement())
+  name           String
+  amount         Int
+  isText         Boolean @default(false)
+  forceCompleted Boolean @default(false)
+  courseGroupId  Int?
+  planId         Int
+  parentId       Int?
 
-  plan        Plan        @relation(fields: [planId], references: [id], onDelete: Cascade)
-  courseGroup CourseGroup @relation(fields: [courseGroupId], references: [id])
+  plan        Plan             @relation(fields: [planId], references: [id], onDelete: Cascade)
+  courseGroup  CourseGroup?     @relation(fields: [courseGroupId], references: [id])
+  parent       PlanRequirement? @relation("PlanRequirementTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children     PlanRequirement[] @relation("PlanRequirementTree")
 }
 
 model Faculty {
@@ -97,14 +102,18 @@ model Template {
 }
 
 model Requirement {
-  id            Int    @id @default(autoincrement())
+  id            Int     @id @default(autoincrement())
   name          String
-  courseGroupId Int
+  amount        Int
+  isText        Boolean @default(false)
+  courseGroupId Int?
   templateId    Int
+  parentId      Int?
 
-  template    Template    @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  amount      Int
-  courseGroup CourseGroup @relation(fields: [courseGroupId], references: [id])
+  template    Template     @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  courseGroup  CourseGroup? @relation(fields: [courseGroupId], references: [id])
+  parent       Requirement? @relation("RequirementTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children     Requirement[] @relation("RequirementTree")
 }
 
 model CourseGroup {

@@ -10,6 +10,27 @@ async function parseId(params: Params["params"]) {
   return parsed;
 }
 
+// Prisma doesn't support recursive includes, so we hardcode 4 levels deep
+const courseGroupInclude = {
+  include: { links: { include: { course: true } } },
+} as const;
+
+function requirementInclude(depth: number): any {
+  const base: any = {
+    include: {
+      courseGroup: courseGroupInclude,
+    },
+  };
+  if (depth > 0) {
+    base.include.children = requirementInclude(depth - 1);
+  } else {
+    base.include.children = true;
+  }
+  return base;
+}
+
+const reqInclude = requirementInclude(4);
+
 export async function GET(request: NextRequest, { params }: Params) {
   const userId = await parseId(params);
   if (!userId) {
@@ -19,8 +40,23 @@ export async function GET(request: NextRequest, { params }: Params) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
-      template: { include: { requirements: { include: { courseGroup: { include: { links: { include: { course: true } } } } } } } },
-      plan: { include: { template: true, requirements: { include: { courseGroup: { include: { links: { include: { course: true } } } } } } } },
+      template: {
+        include: {
+          requirements: {
+            where: { parentId: null },
+            ...reqInclude,
+          },
+        },
+      },
+      plan: {
+        include: {
+          template: true,
+          requirements: {
+            where: { parentId: null },
+            ...reqInclude,
+          },
+        },
+      },
     },
   });
 
@@ -81,7 +117,13 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   // Custom plan — create plan with requirements
-  const planRequirements = [];
+  const plan = await prisma.plan.create({
+    data: {
+      name: name || `Custom Plan`,
+      userId,
+      templateId,
+    },
+  });
 
   for (const req of requirements) {
     let courseGroupId = req.courseGroupId;
@@ -91,13 +133,10 @@ export async function POST(request: NextRequest, { params }: Params) {
       const courseCodes: string[] = req.courseCodes || [];
 
       if (facultyGroupIds.length === 1 && courseCodes.length === 0) {
-        // Single faculty, no extra courses — use the faculty group directly
         courseGroupId = facultyGroupIds[0];
       } else if (facultyGroupIds.length > 0 || courseCodes.length > 0) {
-        // Multiple faculties or extra courses — build a union group
         const unionCodes = new Set<string>(courseCodes);
 
-        // Gather all courses from selected faculty groups
         if (facultyGroupIds.length > 0) {
           const facultyLinks = await prisma.courseGroupLink.findMany({
             where: { groupId: { in: facultyGroupIds } },
@@ -128,32 +167,33 @@ export async function POST(request: NextRequest, { params }: Params) {
     }
 
     if (courseGroupId) {
-      planRequirements.push({
-        name: req.name,
-        amount: req.amount,
-        courseGroupId,
+      await prisma.planRequirement.create({
+        data: {
+          name: req.name,
+          amount: req.amount,
+          courseGroupId,
+          planId: plan.id,
+        },
       });
     }
   }
 
   // Clear the default template reference since we're using a custom plan
-  const plan = await prisma.plan.create({
-    data: {
-      name: name || `Custom Plan`,
-      userId,
-      templateId,
-      requirements: { createMany: { data: planRequirements } },
-    },
-    include: {
-      template: true,
-      requirements: { include: { courseGroup: { include: { links: { include: { course: true } } } } } },
-    },
-  });
-
   await prisma.user.update({
     where: { id: userId },
     data: { templateId: null },
   });
 
-  return NextResponse.json({ type: "plan", plan }, { status: 201 });
+  const fullPlan = await prisma.plan.findUnique({
+    where: { id: plan.id },
+    include: {
+      template: true,
+      requirements: {
+        where: { parentId: null },
+        ...reqInclude,
+      },
+    },
+  });
+
+  return NextResponse.json({ type: "plan", plan: fullPlan }, { status: 201 });
 }

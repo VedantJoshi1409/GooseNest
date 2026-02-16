@@ -10,6 +10,24 @@ async function parseId(params: Params["params"]) {
   return parsed;
 }
 
+const courseGroupInclude = {
+  include: { links: { include: { course: true } } },
+} as const;
+
+function requirementInclude(depth: number): any {
+  const base: any = {
+    include: {
+      courseGroup: courseGroupInclude,
+    },
+  };
+  if (depth > 0) {
+    base.include.children = requirementInclude(depth - 1);
+  } else {
+    base.include.children = true;
+  }
+  return base;
+}
+
 export async function GET(request: NextRequest, { params }: Params) {
   const id = await parseId(params);
   if (!id) {
@@ -20,13 +38,8 @@ export async function GET(request: NextRequest, { params }: Params) {
     where: { id },
     include: {
       requirements: {
-        include: {
-          courseGroup: {
-            include: {
-              links: { include: { course: true } },
-            },
-          },
-        },
+        where: { parentId: null },
+        ...requirementInclude(4),
       },
     },
   });

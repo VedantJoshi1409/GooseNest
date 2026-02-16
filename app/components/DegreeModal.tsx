@@ -9,10 +9,24 @@ interface DegreeModalProps {
   onSelectDegree: () => void;
 }
 
+interface RequirementNode {
+  id: number;
+  name: string;
+  amount: number;
+  isText: boolean;
+  courseGroupId?: number | null;
+  courseGroup?: {
+    id: number;
+    name: string;
+    links: { course: { code: string; name?: string } }[];
+  } | null;
+  children: RequirementNode[];
+}
+
 interface SelectedDegreeState {
   id: number;
   name: string;
-  requirements?: any[];
+  requirements?: RequirementNode[];
 }
 
 interface CustomRequirement {
@@ -105,14 +119,12 @@ export default function DegreeModal({
     }, 300);
   };
 
-  // Filter degrees based on search query using useMemo
   const filteredDegrees = useMemo(() => {
     return templates.filter((degree) =>
       degree.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [templates, searchQuery]);
 
-  // Handle clicks outside dropdown to close it
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -135,7 +147,6 @@ export default function DegreeModal({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Handle escape key to close modal
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
@@ -167,23 +178,19 @@ export default function DegreeModal({
     onClose,
   ]);
 
-  // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
     }
-
     return () => {
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
-  // Load current degree on open, reset on close
   useEffect(() => {
     if (isOpen) {
-      // Fetch current degree from DB
       const loadCurrentDegree = async () => {
         setLoadingRequirements(true);
         try {
@@ -203,7 +210,7 @@ export default function DegreeModal({
               requirements: data.template.requirements || [],
             });
             const allIds = new Set<number>(
-              (data.template.requirements || []).map((_: any, i: number) => i)
+              (data.template.requirements || []).map((r: RequirementNode) => r.id)
             );
             setEnabledRequirements(allIds);
           } else if (data.type === "plan" && data.plan) {
@@ -218,7 +225,7 @@ export default function DegreeModal({
               requirements: data.plan.requirements || [],
             });
             const allIds = new Set<number>(
-              (data.plan.requirements || []).map((_: any, i: number) => i)
+              (data.plan.requirements || []).map((r: RequirementNode) => r.id)
             );
             setEnabledRequirements(allIds);
           }
@@ -264,7 +271,6 @@ export default function DegreeModal({
     setLoadingRequirements(true);
 
     try {
-      // Fetch full template details with requirements
       const response = await fetch(`/api/templates/${templateId}`);
       if (response.ok) {
         const templateData = await response.json();
@@ -275,11 +281,10 @@ export default function DegreeModal({
         });
         setPlanName(degreeName);
         setIsDirty(true);
-        // Enable all requirements by default
-        const allRequirementIds = new Set<number>(
-          templateData.requirements?.map((_: any, index: number) => index) || []
+        const allReqIds = new Set<number>(
+          (templateData.requirements || []).map((r: RequirementNode) => r.id)
         );
-        setEnabledRequirements(allRequirementIds);
+        setEnabledRequirements(allReqIds);
         setIsEditingRequirements(false);
       }
     } catch (error) {
@@ -294,32 +299,30 @@ export default function DegreeModal({
   };
 
   const handleCancelEdit = () => {
-    // Restore all requirements to enabled
     if (selectedDegree?.requirements) {
-      const allRequirementIds = new Set(
-        selectedDegree.requirements.map((_, index) => index)
+      const allReqIds = new Set(
+        selectedDegree.requirements.map((r) => r.id)
       );
-      setEnabledRequirements(allRequirementIds);
+      setEnabledRequirements(allReqIds);
     }
     setIsEditingRequirements(false);
     setIsCreatingCustom(false);
   };
 
   const handleSaveEdit = async () => {
-    // Persist the edited requirements then close edit mode
     setIsDirty(true);
     await persistDegree();
     setIsEditingRequirements(false);
     setIsCreatingCustom(false);
   };
 
-  const toggleRequirement = (index: number) => {
+  const toggleRequirement = (reqId: number) => {
     setEnabledRequirements((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(index)) {
-        newSet.delete(index);
+      if (newSet.has(reqId)) {
+        newSet.delete(reqId);
       } else {
-        newSet.add(index);
+        newSet.add(reqId);
       }
       return newSet;
     });
@@ -386,11 +389,9 @@ export default function DegreeModal({
 
   const hasModifications = () => {
     if (!selectedDegree?.requirements) return false;
-    // Check if any template requirements were toggled off
-    const allEnabled = selectedDegree.requirements.every((_, index) =>
-      enabledRequirements.has(index)
+    const allEnabled = selectedDegree.requirements.every((r) =>
+      enabledRequirements.has(r.id)
     );
-    // Check if custom requirements were added
     return !allEnabled || customRequirements.length > 0;
   };
 
@@ -406,22 +407,20 @@ export default function DegreeModal({
       (originalType === "plan" && selectedDegree.id === originalDegreeId);
 
     if (!needsPlan) {
-      // No modifications, different template selected — assign default template
       await fetch(`/api/users/${userId}/degree`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ templateId: selectedDegree.id }),
       });
     } else {
-      // Build requirements list from enabled reqs + custom reqs
       const requirements: any[] = [];
 
-      selectedDegree.requirements?.forEach((req, index) => {
-        if (enabledRequirements.has(index)) {
+      selectedDegree.requirements?.forEach((req) => {
+        if (enabledRequirements.has(req.id)) {
           requirements.push({
-            name: req.courseGroup?.name || req.name || `Requirement ${index + 1}`,
+            name: req.courseGroup?.name || req.name,
             amount: req.amount || 1,
-            courseGroupId: req.courseGroupId,
+            courseGroupId: req.courseGroup?.id || req.courseGroupId,
           });
         }
       });
@@ -461,11 +460,127 @@ export default function DegreeModal({
     }
   };
 
+  // Recursive rendering for requirement display in modal
+  function RequirementDisplay({ req, depth = 0 }: { req: RequirementNode; depth?: number }) {
+    const isLeaf = !req.children || req.children.length === 0;
+    const isBranch = req.children && req.children.length > 0;
+    const isText = req.isText;
+
+    return (
+      <div className={depth > 0 ? "ml-4 border-l border-[var(--goose-mist)] pl-3 mt-2" : ""}>
+        <div className="flex items-start justify-between">
+          <p className={`font-medium text-sm ${isText ? "italic text-[var(--goose-slate)]" : ""}`}>
+            {isBranch
+              ? `Complete ${req.amount} of the following:`
+              : isText
+                ? req.name
+                : req.courseGroup?.name || req.name}
+          </p>
+        </div>
+
+        {isLeaf && !isText && (
+          <p className="text-xs text-[var(--goose-slate)] mt-1">
+            Required: {req.amount} course{req.amount !== 1 ? "s" : ""}
+          </p>
+        )}
+
+        {isLeaf && !isText && req.courseGroup?.links && req.courseGroup.links.length > 0 && (
+          <ul className="mt-1 ml-4 list-disc text-xs text-[var(--goose-slate)]">
+            {req.courseGroup.links.slice(0, 3).map((link: any, i: number) => (
+              <li key={i}>
+                {link.course?.code || "Course"}
+              </li>
+            ))}
+            {req.courseGroup.links.length > 3 && (
+              <li className="italic">
+                ...and {req.courseGroup.links.length - 3} more courses
+              </li>
+            )}
+          </ul>
+        )}
+
+        {isBranch && (
+          <div className="mt-1">
+            {req.children.map((child) => (
+              <RequirementDisplay key={child.id} req={child} depth={depth + 1} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Recursive rendering for edit mode
+  function RequirementEditItem({
+    req,
+    depth = 0,
+  }: {
+    req: RequirementNode;
+    depth?: number;
+  }) {
+    const isEnabled = enabledRequirements.has(req.id);
+    const isLeaf = !req.children || req.children.length === 0;
+    const isBranch = req.children && req.children.length > 0;
+    const isText = req.isText;
+
+    return (
+      <div className={depth > 0 ? "ml-4 border-l border-[var(--goose-mist)] pl-3 mt-2" : ""}>
+        <div className={`flex items-start gap-3 ${!isEnabled ? "opacity-50" : ""}`}>
+          {depth === 0 && (
+            <input
+              type="checkbox"
+              checked={isEnabled}
+              onChange={() => toggleRequirement(req.id)}
+              className="mt-1 w-4 h-4 cursor-pointer accent-[var(--goose-ink)]"
+            />
+          )}
+          <div className="flex-1">
+            <p className={`font-medium text-sm ${isText ? "italic text-[var(--goose-slate)]" : ""}`}>
+              {isBranch
+                ? `Complete ${req.amount} of the following:`
+                : isText
+                  ? req.name
+                  : req.courseGroup?.name || req.name}
+            </p>
+
+            {isLeaf && !isText && (
+              <p className="text-xs text-[var(--goose-slate)] mt-1">
+                Required: {req.amount} course{req.amount !== 1 ? "s" : ""}
+              </p>
+            )}
+
+            {isLeaf && !isText && req.courseGroup?.links && req.courseGroup.links.length > 0 && (
+              <ul className="mt-1 ml-4 list-disc text-xs text-[var(--goose-slate)]">
+                {req.courseGroup.links.slice(0, 3).map((link: any, i: number) => (
+                  <li key={i}>
+                    {link.course?.code || "Course"}
+                  </li>
+                ))}
+                {req.courseGroup.links.length > 3 && (
+                  <li className="italic">
+                    ...and {req.courseGroup.links.length - 3} more courses
+                  </li>
+                )}
+              </ul>
+            )}
+
+            {isBranch && (
+              <div className="mt-1">
+                {req.children.map((child) => (
+                  <RequirementDisplay key={child.id} req={child} depth={depth + 1} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const allRequirements = [
-    ...(selectedDegree?.requirements || []).map((req, index) => ({
+    ...(selectedDegree?.requirements || []).map((req) => ({
       ...req,
-      index,
-      isCustom: false,
+      isCustom: false as const,
     })),
     ...customRequirements,
   ];
@@ -524,7 +639,6 @@ export default function DegreeModal({
               className="w-full border border-[var(--goose-ink)] px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-[var(--goose-slate)] cursor-pointer"
             />
 
-            {/* Dropdown */}
             {isDropdownOpen && (
               <div
                 ref={dropdownRef}
@@ -560,7 +674,7 @@ export default function DegreeModal({
             )}
           </div>
 
-          {/* Requirements Section - Always visible with fixed height */}
+          {/* Requirements Section */}
           <div className="border border-[var(--goose-ink)] p-6 md:p-8 rounded h-[280px] overflow-y-auto">
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-display text-xl font-bold text-[var(--goose-ink)]">
@@ -752,113 +866,71 @@ export default function DegreeModal({
               </div>
             ) : allRequirements.length > 0 ? (
               <div className="space-y-3">
-                {allRequirements.map((req, displayIndex) => {
+                {allRequirements.map((req) => {
                   const isCustomReq = "isCustom" in req && req.isCustom;
-                  const actualIndex = isCustomReq ? -1 : req.index;
-                  const isEnabled =
-                    isCustomReq || enabledRequirements.has(actualIndex);
 
-                  return (
-                    <div
-                      key={isCustomReq ? req.id : displayIndex}
-                      className={`text-[var(--goose-ink)] ${
-                        isEditingRequirements ? "flex items-start gap-3" : ""
-                      } ${
-                        !isEnabled && !isEditingRequirements ? "hidden" : ""
-                      }`}
-                    >
-                      {isEditingRequirements && !isCustomReq && (
-                        <input
-                          type="checkbox"
-                          checked={isEnabled}
-                          onChange={() => toggleRequirement(actualIndex)}
-                          className="mt-1 w-4 h-4 cursor-pointer accent-[var(--goose-ink)]"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between">
-                          <p
-                            className={`font-medium ${
-                              !isEnabled ? "text-[var(--goose-slate)]" : ""
-                            }`}
-                          >
-                            {isCustomReq
-                              ? req.title
-                              : req.courseGroup?.name ||
-                                `Requirement ${displayIndex + 1}`}
-                            {isCustomReq && (
+                  if (isCustomReq) {
+                    // Custom requirements — render flat as before
+                    return (
+                      <div
+                        key={req.id}
+                        className={isEditingRequirements ? "flex items-start gap-3" : ""}
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between">
+                            <p className="font-medium text-sm">
+                              {req.title}
                               <span className="ml-2 text-xs bg-[var(--goose-slate)] text-[var(--goose-cream)] px-2 py-0.5 rounded">
                                 Custom
                               </span>
+                            </p>
+                            {isEditingRequirements && (
+                              <button
+                                onClick={() => removeCustomRequirement(req.id)}
+                                className="text-xs text-red-600 hover:text-red-800"
+                              >
+                                Remove
+                              </button>
                             )}
+                          </div>
+                          <p className="text-xs text-[var(--goose-slate)] mt-1">
+                            Required: {req.amount} course{req.amount !== 1 ? "s" : ""}
                           </p>
-                          {isEditingRequirements && isCustomReq && (
-                            <button
-                              onClick={() => removeCustomRequirement(req.id)}
-                              className="text-xs text-red-600 hover:text-red-800"
-                            >
-                              Remove
-                            </button>
+                          {req.eligibleFaculties.length > 0 && (
+                            <div className="mt-1 text-xs text-[var(--goose-slate)]">
+                              Faculties: {req.eligibleFaculties.join(", ")}
+                            </div>
                           )}
-                        </div>
-
-                        <p className="text-xs text-[var(--goose-slate)] mt-1">
-                          {isCustomReq
-                            ? `Required: ${req.amount} course${
-                                req.amount !== 1 ? "s" : ""
-                              }`
-                            : `Required: ${req.amount || 1} course${
-                                (req.amount || 1) !== 1 ? "s" : ""
-                              }`}
-                        </p>
-
-                        {isCustomReq ? (
-                          <>
-                            {req.eligibleFaculties.length > 0 && (
-                              <div className="mt-1 text-xs text-[var(--goose-slate)]">
-                                Faculties: {req.eligibleFaculties.join(", ")}
-                              </div>
-                            )}
-                            {req.eligibleCourses.length > 0 && (
-                              <ul className="mt-1 ml-4 list-disc text-xs text-[var(--goose-slate)]">
-                                {req.eligibleCourses
-                                  .slice(0, 3)
-                                  .map((courseCode: string) => (
-                                    <li key={courseCode}>{courseCode}</li>
-                                  ))}
-                                {req.eligibleCourses.length > 3 && (
-                                  <li className="italic">
-                                    ...and {req.eligibleCourses.length - 3} more
-                                    courses
-                                  </li>
-                                )}
-                              </ul>
-                            )}
-                          </>
-                        ) : (
-                          req.courseGroup?.links &&
-                          req.courseGroup.links.length > 0 && (
+                          {req.eligibleCourses.length > 0 && (
                             <ul className="mt-1 ml-4 list-disc text-xs text-[var(--goose-slate)]">
-                              {req.courseGroup.links
-                                .slice(0, 3)
-                                .map((link: any, linkIndex: number) => (
-                                  <li key={linkIndex}>
-                                    {link.course?.code ||
-                                      link.course?.name ||
-                                      "Course"}
-                                  </li>
-                                ))}
-                              {req.courseGroup.links.length > 3 && (
+                              {req.eligibleCourses.slice(0, 3).map((courseCode: string) => (
+                                <li key={courseCode}>{courseCode}</li>
+                              ))}
+                              {req.eligibleCourses.length > 3 && (
                                 <li className="italic">
-                                  ...and {req.courseGroup.links.length - 3} more
-                                  courses
+                                  ...and {req.eligibleCourses.length - 3} more courses
                                 </li>
                               )}
                             </ul>
-                          )
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    );
+                  }
+
+                  // Template/plan requirement — use recursive rendering
+                  const isEnabled = enabledRequirements.has(req.id);
+
+                  if (!isEnabled && !isEditingRequirements) return null;
+
+                  if (isEditingRequirements) {
+                    return (
+                      <RequirementEditItem key={req.id} req={req as RequirementNode} />
+                    );
+                  }
+
+                  return (
+                    <RequirementDisplay key={req.id} req={req as RequirementNode} />
                   );
                 })}
               </div>

@@ -10,41 +10,32 @@ async function parseId(params: Params["params"]) {
   return parsed;
 }
 
+// Recursive type for requirement trees (template or plan)
+interface ReqTreeNode {
+  id: number;
+  name: string;
+  amount: number;
+  isText: boolean;
+  courseGroupId: number | null;
+  courseGroup: { id: number; name: string; links: { courseCode: string }[] } | null;
+  children: ReqTreeNode[];
+}
+
 /**
- * Ensures the user has a plan with a private copy of the specified course group.
- * If the user is on a template, creates a plan and copies all course groups.
- * If the user already has a plan but the group is shared, copies just that group.
- * Returns the private courseGroupId to modify.
+ * Recursively copy a template requirement tree into PlanRequirements.
+ * Returns a map from old courseGroupId → new courseGroupId.
  */
-async function ensurePrivateGroup(userId: number, courseGroupId: number) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      template: {
-        include: {
-          requirements: {
-            include: { courseGroup: { include: { links: true } } },
-          },
-        },
-      },
-      plan: {
-        include: {
-          requirements: {
-            include: { courseGroup: { include: { links: true } } },
-          },
-        },
-      },
-    },
-  });
+async function copyRequirementTree(
+  planId: number,
+  reqs: ReqTreeNode[],
+  parentId: number | null,
+  groupIdMap: Map<number, number>,
+) {
+  for (const req of reqs) {
+    let newGroupId = req.courseGroupId;
 
-  if (!user) return null;
-
-  // Case 1: User is on a template (no plan) — create a plan, copy all groups
-  if (!user.plan && user.template) {
-    const groupIdMap = new Map<number, number>();
-
-    // Copy each template course group
-    for (const req of user.template.requirements) {
+    if (req.courseGroup && req.courseGroupId) {
+      // Copy the course group
       const copiedGroup = await prisma.courseGroup.create({
         data: {
           name: req.courseGroup.name,
@@ -57,26 +48,108 @@ async function ensurePrivateGroup(userId: number, courseGroupId: number) {
           },
         },
       });
-      groupIdMap.set(req.courseGroup.id, copiedGroup.id);
+      groupIdMap.set(req.courseGroupId, copiedGroup.id);
+      newGroupId = copiedGroup.id;
     }
 
-    // Create a plan with copied groups
+    const planReq = await prisma.planRequirement.create({
+      data: {
+        name: req.name,
+        amount: req.amount,
+        isText: req.isText,
+        courseGroupId: newGroupId,
+        planId,
+        parentId,
+      },
+    });
+
+    if (req.children && req.children.length > 0) {
+      await copyRequirementTree(planId, req.children, planReq.id, groupIdMap);
+    }
+  }
+}
+
+/**
+ * Recursively search for a PlanRequirement by courseGroupId in a tree.
+ */
+function findPlanReqByGroupId(
+  reqs: any[],
+  groupId: number,
+): any | null {
+  for (const r of reqs) {
+    if (r.courseGroup?.id === groupId) return r;
+    if (r.children && r.children.length > 0) {
+      const found = findPlanReqByGroupId(r.children, groupId);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+/**
+ * Ensures the user has a plan with a private copy of the specified course group.
+ * If the user is on a template, creates a plan and copies the whole tree.
+ * If the user already has a plan but the group is shared, copies just that group.
+ * Returns the private courseGroupId to modify.
+ */
+async function ensurePrivateGroup(userId: number, courseGroupId: number) {
+  // Build recursive include (4 levels)
+  function reqInclude(depth: number): any {
+    const base: any = {
+      include: {
+        courseGroup: { include: { links: true } },
+      },
+    };
+    if (depth > 0) {
+      base.include.children = reqInclude(depth - 1);
+    } else {
+      base.include.children = true;
+    }
+    return base;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      template: {
+        include: {
+          requirements: {
+            where: { parentId: null },
+            ...reqInclude(4),
+          },
+        },
+      },
+      plan: {
+        include: {
+          requirements: {
+            where: { parentId: null },
+            ...reqInclude(4),
+          },
+        },
+      },
+    },
+  });
+
+  if (!user) return null;
+
+  // Case 1: User is on a template (no plan) — create a plan, copy entire tree
+  if (!user.plan && user.template) {
+    const groupIdMap = new Map<number, number>();
+
     const plan = await prisma.plan.create({
       data: {
         name: `${user.template.name} (Custom)`,
         userId,
         templateId: user.template.id,
-        requirements: {
-          createMany: {
-            data: user.template.requirements.map((req) => ({
-              name: req.courseGroup.name,
-              amount: req.amount,
-              courseGroupId: groupIdMap.get(req.courseGroup.id)!,
-            })),
-          },
-        },
       },
     });
+
+    await copyRequirementTree(
+      plan.id,
+      user.template.requirements as unknown as ReqTreeNode[],
+      null,
+      groupIdMap,
+    );
 
     // Clear template reference
     await prisma.user.update({
@@ -92,9 +165,10 @@ async function ensurePrivateGroup(userId: number, courseGroupId: number) {
 
   // Case 2: User already has a plan
   if (user.plan) {
-    // Check if the group is already private to this plan
-    const planReq = user.plan.requirements.find(
-      (r) => r.courseGroup.id === courseGroupId
+    // Find the requirement anywhere in the tree
+    const planReq = findPlanReqByGroupId(
+      user.plan.requirements,
+      courseGroupId,
     );
 
     if (planReq) {
@@ -115,7 +189,7 @@ async function ensurePrivateGroup(userId: number, courseGroupId: number) {
           name: originalGroup.name,
           links: {
             createMany: {
-              data: originalGroup.links.map((l) => ({
+              data: originalGroup.links.map((l: any) => ({
                 courseCode: l.courseCode,
               })),
             },
@@ -132,7 +206,7 @@ async function ensurePrivateGroup(userId: number, courseGroupId: number) {
       return { planId: user.plan.id, privateGroupId: copiedGroup.id };
     }
 
-    // Group not found in plan requirements — shouldn't normally happen
+    // Group not found in plan requirements
     return null;
   }
 
@@ -142,9 +216,6 @@ async function ensurePrivateGroup(userId: number, courseGroupId: number) {
 /**
  * POST /api/users/[id]/degree/courses
  * Body: { courseGroupId: number, courseCode: string }
- *
- * Adds a course to a requirement group with copy-on-write.
- * Creates a plan if the user is on a template.
  */
 export async function POST(request: NextRequest, { params }: Params) {
   const userId = await parseId(params);
@@ -182,9 +253,6 @@ export async function POST(request: NextRequest, { params }: Params) {
 /**
  * DELETE /api/users/[id]/degree/courses
  * Body: { courseGroupId: number, courseCode: string }
- *
- * Removes a course from a requirement group with copy-on-write.
- * Creates a plan if the user is on a template.
  */
 export async function DELETE(request: NextRequest, { params }: Params) {
   const userId = await parseId(params);

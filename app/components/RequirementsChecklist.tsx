@@ -7,24 +7,28 @@ interface CourseLink {
   course: { code: string; title: string };
 }
 
-interface Requirement {
+interface RequirementNode {
   id: number;
   name: string;
   amount: number;
+  isText: boolean;
+  forceCompleted?: boolean;
   courseGroup: {
     id: number;
     name: string;
     links: CourseLink[];
-  };
+  } | null;
+  children: RequirementNode[];
 }
 
 interface DegreeData {
   type: "template" | "plan" | "none";
-  template?: { name: string; requirements: Requirement[] };
+  template?: { name: string; requirements: RequirementNode[] };
   plan?: {
+    id: number;
     name: string;
     template: { name: string };
-    requirements: Requirement[];
+    requirements: RequirementNode[];
   };
 }
 
@@ -35,6 +39,69 @@ interface SearchResult {
 
 const TERMS = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
 
+// TODO: replace with actual user ID from auth
+const USER_ID = 1;
+
+/**
+ * Recursive fulfillment check:
+ * - Text node: fulfilled if forceCompleted
+ * - Leaf node (has courseGroup): fulfilled if completed courses >= amount, or forceCompleted
+ * - Branch node (has children): fulfilled if N children fulfilled (N = amount), or forceCompleted
+ */
+function isNodeFulfilled(
+  node: RequirementNode,
+  completedCourses: Set<string>,
+): boolean {
+  if (node.forceCompleted) return true;
+
+  if (node.isText) return false;
+
+  if (node.courseGroup) {
+    const completed = node.courseGroup.links.filter((l) =>
+      completedCourses.has(l.courseCode),
+    ).length;
+    return completed >= node.amount;
+  }
+
+  if (node.children && node.children.length > 0) {
+    const fulfilledChildren = node.children.filter((c) =>
+      isNodeFulfilled(c, completedCourses),
+    ).length;
+    return fulfilledChildren >= node.amount;
+  }
+
+  return false;
+}
+
+function isNodeFulfilledWithPlanned(
+  node: RequirementNode,
+  completedCourses: Set<string>,
+  plannedCourses: Set<string>,
+): boolean {
+  if (node.forceCompleted) return true;
+
+  if (node.isText) return false;
+
+  if (node.courseGroup) {
+    const completed = node.courseGroup.links.filter((l) =>
+      completedCourses.has(l.courseCode),
+    ).length;
+    const planned = node.courseGroup.links.filter((l) =>
+      plannedCourses.has(l.courseCode),
+    ).length;
+    return completed + planned >= node.amount;
+  }
+
+  if (node.children && node.children.length > 0) {
+    const fulfilledChildren = node.children.filter((c) =>
+      isNodeFulfilledWithPlanned(c, completedCourses, plannedCourses),
+    ).length;
+    return fulfilledChildren >= node.amount;
+  }
+
+  return false;
+}
+
 export default function RequirementsChecklist() {
   const [degreeData, setDegreeData] = useState<DegreeData | null>(null);
   const [completedCourses, setCompletedCourses] = useState<Set<string>>(new Set());
@@ -42,31 +109,6 @@ export default function RequirementsChecklist() {
   const [missingPrereqs, setMissingPrereqs] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [currentTerm, setCurrentTerm] = useState<string>("1A");
-
-  // Force-completed requirements (persisted in sessionStorage)
-  const [forceCompleted, setForceCompleted] = useState<Set<number>>(() => {
-    try {
-      const stored = sessionStorage.getItem("goose_nest_force_completed");
-      return stored ? new Set(JSON.parse(stored)) : new Set();
-    } catch {
-      return new Set();
-    }
-  });
-
-  const toggleForceComplete = (reqId: number) => {
-    setForceCompleted((prev) => {
-      const next = new Set(prev);
-      if (next.has(reqId)) {
-        next.delete(reqId);
-      } else {
-        next.add(reqId);
-      }
-      try {
-        sessionStorage.setItem("goose_nest_force_completed", JSON.stringify([...next]));
-      } catch {}
-      return next;
-    });
-  };
 
   // Add-course panel state
   const [addingToReq, setAddingToReq] = useState<number | null>(null);
@@ -78,9 +120,6 @@ export default function RequirementsChecklist() {
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
-
-  // TODO: replace with actual user ID from auth
-  const userId = 1;
 
   useEffect(() => {
     channelRef.current = new BroadcastChannel("schedule-updates");
@@ -131,9 +170,8 @@ export default function RequirementsChecklist() {
     }, 300);
   }, []);
 
-  // Re-fetch degree data from DB (needed after copy-on-write changes group IDs)
   const refreshDegreeData = async () => {
-    const res = await fetch(`/api/users/${userId}/degree`);
+    const res = await fetch(`/api/users/${USER_ID}/degree`);
     if (res.ok) setDegreeData(await res.json());
   };
 
@@ -148,13 +186,12 @@ export default function RequirementsChecklist() {
 
   const handleAddToGroupOnly = async (courseGroupId: number, courseCode: string) => {
     try {
-      const res = await fetch(`/api/users/${userId}/degree/courses`, {
+      const res = await fetch(`/api/users/${USER_ID}/degree/courses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ courseGroupId, courseCode }),
       });
       if (!res.ok) return;
-      // Group IDs may have changed due to copy-on-write, re-fetch
       await refreshDegreeData();
       closePanel();
     } catch (error) {
@@ -169,12 +206,12 @@ export default function RequirementsChecklist() {
   ) => {
     try {
       const [groupRes, scheduleRes] = await Promise.all([
-        fetch(`/api/users/${userId}/degree/courses`, {
+        fetch(`/api/users/${USER_ID}/degree/courses`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ courseGroupId, courseCode }),
         }),
-        fetch(`/api/users/${userId}/schedule`, {
+        fetch(`/api/users/${USER_ID}/schedule`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ courseCode, term }),
@@ -183,7 +220,6 @@ export default function RequirementsChecklist() {
 
       if (!groupRes.ok || !scheduleRes.ok) return;
 
-      // Group IDs may have changed due to copy-on-write, re-fetch
       await refreshDegreeData();
       setPlannedCourses((prev) => new Set(prev).add(courseCode));
       channelRef.current?.postMessage("changed");
@@ -195,16 +231,29 @@ export default function RequirementsChecklist() {
 
   const handleRemoveFromGroup = async (courseGroupId: number, courseCode: string) => {
     try {
-      const res = await fetch(`/api/users/${userId}/degree/courses`, {
+      const res = await fetch(`/api/users/${USER_ID}/degree/courses`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ courseGroupId, courseCode }),
       });
       if (!res.ok) return;
-      // Group IDs may have changed due to copy-on-write, re-fetch
       await refreshDegreeData();
     } catch (error) {
       console.error("Error removing course from group:", error);
+    }
+  };
+
+  const handleForceComplete = async (reqId: number, currentlyForced: boolean) => {
+    try {
+      const res = await fetch(`/api/users/${USER_ID}/degree/requirements/${reqId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ forceCompleted: !currentlyForced }),
+      });
+      if (!res.ok) return;
+      await refreshDegreeData();
+    } catch (error) {
+      console.error("Error toggling force-complete:", error);
     }
   };
 
@@ -212,8 +261,8 @@ export default function RequirementsChecklist() {
     const fetchData = async () => {
       try {
         const [degreeRes, scheduleRes] = await Promise.all([
-          fetch(`/api/users/${userId}/degree`),
-          fetch(`/api/users/${userId}/schedule`),
+          fetch(`/api/users/${USER_ID}/degree`),
+          fetch(`/api/users/${USER_ID}/schedule`),
         ]);
 
         if (degreeRes.ok) {
@@ -243,7 +292,6 @@ export default function RequirementsChecklist() {
             }
           }
 
-          // Compute courses with no prerequisites met
           const coursesByTerm = new Map<string, Set<string>>();
           for (const entry of data.entries) {
             if (!coursesByTerm.has(entry.term)) coursesByTerm.set(entry.term, new Set());
@@ -312,6 +360,8 @@ export default function RequirementsChecklist() {
       ? degreeData.plan?.template?.name
       : null;
 
+  const isPlan = degreeData.type === "plan";
+
   if (!requirements || requirements.length === 0) {
     return (
       <div className="p-4">
@@ -325,28 +375,261 @@ export default function RequirementsChecklist() {
     );
   }
 
-  const totalRequirements = requirements.length;
-  const totalFulfilled = requirements.filter((r) => {
-    const completed = r.courseGroup.links.filter((l) =>
-      completedCourses.has(l.courseCode)
-    ).length;
-    return completed >= r.amount;
-  }).length;
-  const totalForceCompleted = requirements.filter((r) => {
-    const completed = r.courseGroup.links.filter((l) =>
-      completedCourses.has(l.courseCode)
-    ).length;
-    return completed < r.amount && forceCompleted.has(r.id);
-  }).length;
-  const totalFulfilledWithPlanned = requirements.filter((r) => {
-    const completed = r.courseGroup.links.filter((l) =>
-      completedCourses.has(l.courseCode)
-    ).length;
-    const planned = r.courseGroup.links.filter((l) =>
-      plannedCourses.has(l.courseCode)
-    ).length;
-    return completed + planned >= r.amount && !forceCompleted.has(r.id);
-  }).length - totalFulfilled;
+  // Count fulfilled requirements (top-level only for summary)
+  const countNodes = (nodes: RequirementNode[]): { total: number; fulfilled: number; forced: number; planned: number } => {
+    let total = 0;
+    let fulfilled = 0;
+    let forced = 0;
+    let planned = 0;
+    for (const node of nodes) {
+      total++;
+      const isFulfilled = isNodeFulfilled(node, completedCourses);
+      const isForced = !isFulfilled && !!node.forceCompleted;
+      const isFulfilledWithPlanned = !isFulfilled && !isForced && isNodeFulfilledWithPlanned(node, completedCourses, plannedCourses);
+      if (isFulfilled) fulfilled++;
+      if (isForced) forced++;
+      if (isFulfilledWithPlanned) planned++;
+    }
+    return { total, fulfilled, forced, planned };
+  };
+
+  const { total: totalRequirements, fulfilled: totalFulfilled, forced: totalForceCompleted, planned: totalFulfilledWithPlanned } = countNodes(requirements);
+
+  // Recursive requirement renderer
+  function RequirementItem({ req, depth = 0 }: { req: RequirementNode; depth?: number }) {
+    const fulfilled = isNodeFulfilled(req, completedCourses);
+    const isForced = !fulfilled && !!req.forceCompleted;
+    const fulfilledWithPlanned = !fulfilled && !isForced && isNodeFulfilledWithPlanned(req, completedCourses, plannedCourses);
+    const isAdding = addingToReq === req.id;
+    const isLeafWithGroup = !req.isText && req.courseGroup !== null && (!req.children || req.children.length === 0);
+    const isBranch = !req.isText && req.children && req.children.length > 0;
+    const isText = req.isText;
+
+    const eligible = req.courseGroup?.links || [];
+    const completedLinks = eligible.filter((l) => completedCourses.has(l.courseCode));
+    const plannedLinks = eligible.filter((l) => plannedCourses.has(l.courseCode));
+
+    const canForceComplete = isPlan && !fulfilled;
+
+    return (
+      <div className={depth > 0 ? "ml-4 border-l border-[var(--goose-mist)] pl-3" : ""}>
+        <div className="flex items-center gap-2 mb-1">
+          <button
+            onClick={() => {
+              if (canForceComplete) {
+                handleForceComplete(req.id, !!req.forceCompleted);
+              }
+            }}
+            disabled={fulfilled || !isPlan}
+            className={`w-4 h-4 rounded-sm border flex items-center justify-center flex-shrink-0 transition-colors ${
+              fulfilled
+                ? "bg-[var(--goose-ink)] border-[var(--goose-ink)] cursor-default"
+                : isForced
+                  ? "bg-amber-500 border-amber-500 cursor-pointer hover:bg-amber-600"
+                  : fulfilledWithPlanned
+                    ? "bg-blue-500 border-blue-500 cursor-pointer hover:bg-blue-600"
+                    : isPlan
+                      ? "border-[var(--goose-slate)] cursor-pointer hover:border-[var(--goose-ink)] hover:bg-[var(--goose-mist)]/30"
+                      : "border-[var(--goose-slate)] cursor-default"
+            }`}
+            aria-label={isForced ? `Unmark ${req.name} as complete` : `Mark ${req.name} as complete`}
+            title={isForced ? "Click to unmark override" : fulfilled ? "Completed" : isPlan ? "Click to mark as complete (override)" : "Select a degree plan to override"}
+          >
+            {fulfilled && (
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="var(--goose-cream)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 6l3 3 5-5" />
+              </svg>
+            )}
+            {isForced && (
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 6l3 3 5-5" />
+              </svg>
+            )}
+            {!fulfilled && !isForced && fulfilledWithPlanned && (
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 6h8" />
+              </svg>
+            )}
+          </button>
+          <span
+            className={`text-sm font-medium flex-1 ${
+              fulfilled || isForced
+                ? "text-[var(--goose-slate)] line-through"
+                : "text-[var(--goose-ink)]"
+            }`}
+          >
+            {isBranch
+              ? `Complete ${req.amount} of the following:`
+              : isText
+                ? req.name
+                : req.courseGroup?.name || req.name}
+            {isForced && (
+              <span className="text-[10px] text-amber-600 ml-1 no-underline inline-block">(overridden)</span>
+            )}
+          </span>
+          {/* Add course button — only on leaf nodes with courseGroup */}
+          {isLeafWithGroup && !fulfilled && !isForced && (
+            <button
+              onClick={() => {
+                if (isAdding) {
+                  closePanel();
+                } else {
+                  closePanel();
+                  setAddingToReq(req.id);
+                }
+              }}
+              className="w-5 h-5 flex items-center justify-center rounded border border-[var(--goose-mist)] hover:border-[var(--goose-ink)] hover:bg-[var(--goose-mist)]/30 transition-colors flex-shrink-0"
+              aria-label={`Add course to ${req.name}`}
+              title="Add course"
+            >
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <path d="M6 2v8M2 6h8" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Add course panel for leaf nodes */}
+        {isLeafWithGroup && isAdding && (
+          <div ref={panelRef} className="ml-6 mb-2 border border-[var(--goose-ink)] rounded p-2 bg-[var(--goose-cream)] shadow-sm">
+            <input
+              type="text"
+              placeholder="Search courses..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-full text-xs border border-[var(--goose-mist)] rounded px-2 py-1.5 bg-[var(--goose-cream)] focus:outline-none focus:border-[var(--goose-ink)]"
+              autoFocus
+              autoComplete="off"
+            />
+
+            {searchQuery && !selectedCourse && (
+              <div className="mt-1 max-h-32 overflow-y-auto">
+                {isSearching && (
+                  <p className="text-[10px] text-[var(--goose-slate)] italic p-1">Searching...</p>
+                )}
+                {!isSearching && searchResults.length === 0 && (
+                  <p className="text-[10px] text-[var(--goose-slate)] italic p-1">No courses found</p>
+                )}
+                {!isSearching && searchResults.map((course) => {
+                  const alreadyInGroup = eligible.some((l) => l.courseCode === course.code);
+                  const isScheduled = completedCourses.has(course.code) || plannedCourses.has(course.code);
+                  return (
+                    <button
+                      key={course.code}
+                      onClick={() => !alreadyInGroup && handleSelectCourse(course, req.courseGroup!.id)}
+                      disabled={alreadyInGroup}
+                      className={`w-full text-left text-xs px-1.5 py-1 rounded transition-colors ${
+                        alreadyInGroup
+                          ? "opacity-40 cursor-default"
+                          : "hover:bg-[var(--goose-mist)]/30"
+                      }`}
+                    >
+                      <span className="font-semibold">{course.code}</span>
+                      <span className="text-[var(--goose-slate)] ml-1">{course.title}</span>
+                      {isScheduled && !alreadyInGroup && (
+                        <span className="text-blue-600 ml-1">(scheduled)</span>
+                      )}
+                      {alreadyInGroup && (
+                        <span className="text-[var(--goose-slate)] ml-1">(already added)</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {selectedCourse && (
+              <div className="mt-1.5">
+                <p className="text-[10px] text-[var(--goose-slate)] mb-1">
+                  Add <span className="font-semibold text-[var(--goose-ink)]">{selectedCourse.code}</span> to term:
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {TERMS.filter((t) => TERMS.indexOf(t) >= TERMS.indexOf(currentTerm)).map((term) => (
+                    <button
+                      key={term}
+                      onClick={() => handleAddToRequirement(req.courseGroup!.id, selectedCourse.code, term)}
+                      className="text-[10px] px-2 py-0.5 border border-[var(--goose-mist)] rounded hover:border-[var(--goose-ink)] hover:bg-[var(--goose-mist)]/30 transition-colors"
+                    >
+                      {term}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Course list for leaf nodes */}
+        {isLeafWithGroup && (
+          <div className="ml-6">
+            <p className="text-xs text-[var(--goose-slate)] mb-1">
+              {completedLinks.length}/{req.amount} courses
+              {plannedLinks.length > 0 && (
+                <span className="text-blue-600"> (+{plannedLinks.length} planned)</span>
+              )}
+            </p>
+            <div className={`space-y-0.5 ${eligible.length > 5 ? "max-h-[100px] overflow-y-auto pr-1" : ""}`}>
+              {eligible.map((link) => {
+                const isCompleted = completedCourses.has(link.courseCode);
+                const isPlanned = plannedCourses.has(link.courseCode);
+                const isMissing = missingPrereqs.has(link.courseCode);
+                return (
+                  <div
+                    key={link.courseCode}
+                    className={`text-xs flex items-center gap-1.5 group ${
+                      isMissing
+                        ? "text-red-500"
+                        : isCompleted
+                          ? "text-[var(--goose-slate)]"
+                          : isPlanned
+                            ? "text-blue-600"
+                            : "text-[var(--goose-ink)]"
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                        isMissing
+                          ? "bg-red-500"
+                          : isCompleted
+                            ? "bg-[var(--goose-ink)]"
+                            : isPlanned
+                              ? "bg-blue-500"
+                              : "bg-[var(--goose-mist)]"
+                      }`}
+                    />
+                    <span className={`flex-1 ${isCompleted && !isMissing ? "line-through" : ""}`}>
+                      {link.courseCode}
+                      {isMissing && " (prereqs missing)"}
+                      {!isMissing && isPlanned && " (planned)"}
+                    </span>
+                    <button
+                      onClick={() => handleRemoveFromGroup(req.courseGroup!.id, link.courseCode)}
+                      className="opacity-0 group-hover:opacity-100 text-[var(--goose-slate)] hover:text-red-500 transition-all shrink-0"
+                      aria-label={`Remove ${link.courseCode} from ${req.name}`}
+                      title="Remove from requirement"
+                    >
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                        <path d="M3 3l6 6M9 3l-6 6" />
+                      </svg>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Recurse into children for branch nodes */}
+        {isBranch && (
+          <div className="mt-1 space-y-3">
+            {req.children.map((child) => (
+              <RequirementItem key={child.id} req={child} depth={depth + 1} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 flex flex-col h-full">
@@ -369,244 +652,9 @@ export default function RequirementsChecklist() {
       </p>
 
       <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-        {requirements.map((req) => {
-          const eligible = req.courseGroup.links;
-          const completed = eligible.filter((l) =>
-            completedCourses.has(l.courseCode)
-          );
-          const planned = eligible.filter((l) =>
-            plannedCourses.has(l.courseCode)
-          );
-          const fulfilled = completed.length >= req.amount;
-          const isForced = !fulfilled && forceCompleted.has(req.id);
-          const fulfilledWithPlanned = !isForced && completed.length + planned.length >= req.amount;
-          const isAdding = addingToReq === req.id;
-
-          return (
-            <div key={req.id}>
-              <div className="flex items-center gap-2 mb-1">
-                <button
-                  onClick={() => { if (!fulfilled) toggleForceComplete(req.id); }}
-                  disabled={fulfilled}
-                  className={`w-4 h-4 rounded-sm border flex items-center justify-center flex-shrink-0 transition-colors ${
-                    fulfilled
-                      ? "bg-[var(--goose-ink)] border-[var(--goose-ink)] cursor-default"
-                      : isForced
-                        ? "bg-amber-500 border-amber-500 cursor-pointer hover:bg-amber-600"
-                        : fulfilledWithPlanned
-                          ? "bg-blue-500 border-blue-500 cursor-pointer hover:bg-blue-600"
-                          : "border-[var(--goose-slate)] cursor-pointer hover:border-[var(--goose-ink)] hover:bg-[var(--goose-mist)]/30"
-                  }`}
-                  aria-label={isForced ? `Unmark ${req.courseGroup.name} as complete` : `Mark ${req.courseGroup.name} as complete`}
-                  title={isForced ? "Click to unmark override" : fulfilled ? "Completed" : "Click to mark as complete (override)"}
-                >
-                  {fulfilled && (
-                    <svg
-                      width="10"
-                      height="10"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                      stroke="var(--goose-cream)"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M2 6l3 3 5-5" />
-                    </svg>
-                  )}
-                  {isForced && (
-                    <svg
-                      width="10"
-                      height="10"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M2 6l3 3 5-5" />
-                    </svg>
-                  )}
-                  {!fulfilled && !isForced && fulfilledWithPlanned && (
-                    <svg
-                      width="10"
-                      height="10"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M2 6h8" />
-                    </svg>
-                  )}
-                </button>
-                <span
-                  className={`text-sm font-medium flex-1 ${
-                    fulfilled || isForced
-                      ? "text-[var(--goose-slate)] line-through"
-                      : "text-[var(--goose-ink)]"
-                  }`}
-                >
-                  {req.courseGroup.name}
-                  {isForced && (
-                    <span className="text-[10px] text-amber-600 ml-1 no-underline inline-block">(overridden)</span>
-                  )}
-                </span>
-                {!fulfilled && !isForced && (
-                  <button
-                    onClick={() => {
-                      if (isAdding) {
-                        closePanel();
-                      } else {
-                        closePanel();
-                        setAddingToReq(req.id);
-                      }
-                    }}
-                    className="w-5 h-5 flex items-center justify-center rounded border border-[var(--goose-mist)] hover:border-[var(--goose-ink)] hover:bg-[var(--goose-mist)]/30 transition-colors flex-shrink-0"
-                    aria-label={`Add course to ${req.courseGroup.name}`}
-                    title="Add course"
-                  >
-                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                      <path d="M6 2v8M2 6h8" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-
-              {/* Add course panel */}
-              {isAdding && (
-                <div ref={panelRef} className="ml-6 mb-2 border border-[var(--goose-ink)] rounded p-2 bg-[var(--goose-cream)] shadow-sm">
-                  <input
-                    type="text"
-                    placeholder="Search courses..."
-                    value={searchQuery}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    className="w-full text-xs border border-[var(--goose-mist)] rounded px-2 py-1.5 bg-[var(--goose-cream)] focus:outline-none focus:border-[var(--goose-ink)]"
-                    autoFocus
-                    autoComplete="off"
-                  />
-
-                  {/* Search results */}
-                  {searchQuery && !selectedCourse && (
-                    <div className="mt-1 max-h-32 overflow-y-auto">
-                      {isSearching && (
-                        <p className="text-[10px] text-[var(--goose-slate)] italic p-1">Searching...</p>
-                      )}
-                      {!isSearching && searchResults.length === 0 && (
-                        <p className="text-[10px] text-[var(--goose-slate)] italic p-1">No courses found</p>
-                      )}
-                      {!isSearching && searchResults.map((course) => {
-                        const alreadyInGroup = eligible.some((l) => l.courseCode === course.code);
-                        const isScheduled = completedCourses.has(course.code) || plannedCourses.has(course.code);
-                        return (
-                          <button
-                            key={course.code}
-                            onClick={() => !alreadyInGroup && handleSelectCourse(course, req.courseGroup.id)}
-                            disabled={alreadyInGroup}
-                            className={`w-full text-left text-xs px-1.5 py-1 rounded transition-colors ${
-                              alreadyInGroup
-                                ? "opacity-40 cursor-default"
-                                : "hover:bg-[var(--goose-mist)]/30"
-                            }`}
-                          >
-                            <span className="font-semibold">{course.code}</span>
-                            <span className="text-[var(--goose-slate)] ml-1">{course.title}</span>
-                            {isScheduled && !alreadyInGroup && (
-                              <span className="text-blue-600 ml-1">(scheduled)</span>
-                            )}
-                            {alreadyInGroup && (
-                              <span className="text-[var(--goose-slate)] ml-1">(already added)</span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Term picker after selecting a course */}
-                  {selectedCourse && (
-                    <div className="mt-1.5">
-                      <p className="text-[10px] text-[var(--goose-slate)] mb-1">
-                        Add <span className="font-semibold text-[var(--goose-ink)]">{selectedCourse.code}</span> to term:
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {TERMS.filter((t) => TERMS.indexOf(t) >= TERMS.indexOf(currentTerm)).map((term) => (
-                          <button
-                            key={term}
-                            onClick={() => handleAddToRequirement(req.courseGroup.id, selectedCourse.code, term)}
-                            className="text-[10px] px-2 py-0.5 border border-[var(--goose-mist)] rounded hover:border-[var(--goose-ink)] hover:bg-[var(--goose-mist)]/30 transition-colors"
-                          >
-                            {term}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="ml-6">
-                <p className="text-xs text-[var(--goose-slate)] mb-1">
-                  {completed.length}/{req.amount} courses
-                  {planned.length > 0 && (
-                    <span className="text-blue-600"> (+{planned.length} planned)</span>
-                  )}
-                </p>
-                <div className={`space-y-0.5 ${eligible.length > 5 ? "max-h-[100px] overflow-y-auto pr-1" : ""}`}>
-                  {eligible.map((link) => {
-                    const isCompleted = completedCourses.has(link.courseCode);
-                    const isPlanned = plannedCourses.has(link.courseCode);
-                    const isMissing = missingPrereqs.has(link.courseCode);
-                    return (
-                      <div
-                        key={link.courseCode}
-                        className={`text-xs flex items-center gap-1.5 group ${
-                          isMissing
-                            ? "text-red-500"
-                            : isCompleted
-                              ? "text-[var(--goose-slate)]"
-                              : isPlanned
-                                ? "text-blue-600"
-                                : "text-[var(--goose-ink)]"
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                            isMissing
-                              ? "bg-red-500"
-                              : isCompleted
-                                ? "bg-[var(--goose-ink)]"
-                                : isPlanned
-                                  ? "bg-blue-500"
-                                  : "bg-[var(--goose-mist)]"
-                          }`}
-                        />
-                        <span className={`flex-1 ${isCompleted && !isMissing ? "line-through" : ""}`}>
-                          {link.courseCode}
-                          {isMissing && " (prereqs missing)"}
-                          {!isMissing && isPlanned && " (planned)"}
-                        </span>
-                        <button
-                          onClick={() => handleRemoveFromGroup(req.courseGroup.id, link.courseCode)}
-                          className="opacity-0 group-hover:opacity-100 text-[var(--goose-slate)] hover:text-red-500 transition-all shrink-0"
-                          aria-label={`Remove ${link.courseCode} from ${req.courseGroup.name}`}
-                          title="Remove from requirement"
-                        >
-                          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                            <path d="M3 3l6 6M9 3l-6 6" />
-                          </svg>
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {requirements.map((req) => (
+          <RequirementItem key={req.id} req={req} />
+        ))}
       </div>
     </div>
   );

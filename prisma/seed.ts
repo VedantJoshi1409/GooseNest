@@ -19,6 +19,16 @@ interface CourseJson {
   unlocks: string[];
 }
 
+type ReqNode = string | { amount: number; options: ReqNode[] };
+
+interface DegreeTemplate {
+  name: string;
+  href: string;
+  requirements: ReqNode[];
+}
+
+const BATCH_SIZE = 500;
+
 async function main() {
   await prisma.$executeRawUnsafe(`
   TRUNCATE TABLE
@@ -41,6 +51,7 @@ async function main() {
     readFileSync(new URL("../lib/courses.json", import.meta.url), "utf8"),
   );
   const allCourses = Object.values(coursesJson);
+  const validCodes = new Set(allCourses.map((c) => c.id));
   console.log(`Loaded ${allCourses.length} courses from courses.json`);
 
   // 2. Seed faculties
@@ -51,9 +62,7 @@ async function main() {
   console.log(`Seeded ${faculties.length} faculties: ${faculties.join(", ")}`);
 
   // 3. Seed courses in batches
-  const BATCH_SIZE = 500;
   const courseData = allCourses.map((c) => {
-    // Strip course code prefix from title (e.g. "CS135 - Designing..." -> "Designing...")
     const title = c.title.includes(" - ")
       ? c.title.substring(c.title.indexOf(" - ") + 3)
       : c.title;
@@ -114,97 +123,130 @@ async function main() {
     console.log(`Created faculty group "${group.name}" with ${courseCodes.length} courses (id: ${group.id})`);
   }
 
-  // 6. Specific course groups
-  const csCore = await prisma.courseGroup.create({
-    data: { name: "CS Core Courses" },
-  });
+  // 6. Seed all 181 degree templates from degree_requirements.json
+  const degreeData: Record<string, DegreeTemplate> = JSON.parse(
+    readFileSync(new URL("../lib/degree_requirements.json", import.meta.url), "utf8"),
+  );
 
-  const mathCore = await prisma.courseGroup.create({
-    data: { name: "Math Core Courses" },
-  });
+  let templateCount = 0;
+  let reqCount = 0;
+  let groupCount = 0;
 
-  await prisma.courseGroupLink.createMany({
-    data: [
-      { groupId: csCore.id, courseCode: "CS145" },
-      { groupId: csCore.id, courseCode: "CS146" },
-      { groupId: csCore.id, courseCode: "CS245" },
-      { groupId: csCore.id, courseCode: "CS246" },
-    ],
-  });
+  for (const [, degreeTemplate] of Object.entries(degreeData)) {
+    const template = await prisma.template.create({
+      data: { name: degreeTemplate.name },
+    });
 
-  await prisma.courseGroupLink.createMany({
-    data: [
-      { groupId: mathCore.id, courseCode: "MATH145" },
-      { groupId: mathCore.id, courseCode: "MATH146" },
-      { groupId: mathCore.id, courseCode: "MATH147" },
-      { groupId: mathCore.id, courseCode: "MATH148" },
-    ],
-  });
+    await seedRequirements(template.id, degreeTemplate.requirements, null);
+    templateCount++;
+  }
 
-  // 7. Template
-  const template = await prisma.template.create({
-    data: { name: "Computer Science, Honours, 2025" },
-  });
+  /**
+   * Recursively seed requirements for a template.
+   * Each ReqNode can be:
+   * - A string → text-only requirement (isText: true)
+   * - An object with all-string options → leaf requirement with CourseGroup
+   * - An object with nested objects/mixed options → branch requirement with children
+   */
+  async function seedRequirements(
+    templateId: number,
+    nodes: ReqNode[],
+    parentId: number | null,
+  ) {
+    for (const node of nodes) {
+      if (typeof node === "string") {
+        // Text-only requirement
+        await prisma.requirement.create({
+          data: {
+            name: node,
+            amount: 0,
+            isText: true,
+            templateId,
+            parentId,
+          },
+        });
+        reqCount++;
+        continue;
+      }
 
-  await prisma.requirement.createMany({
-    data: [
-      {
-        name: "CS Core",
-        amount: 3,
-        templateId: template.id,
-        courseGroupId: csCore.id,
-      },
-      {
-        name: "Math Core",
-        amount: 2,
-        templateId: template.id,
-        courseGroupId: mathCore.id,
-      },
-    ],
-  });
+      // Object node — check if all options are course codes (strings)
+      const stringOptions = node.options.filter((o): o is string => typeof o === "string");
+      const objectOptions = node.options.filter((o): o is { amount: number; options: ReqNode[] } => typeof o !== "string");
 
-  // 8. Seed user
+      if (objectOptions.length === 0) {
+        // All options are course codes → leaf with CourseGroup
+        const validOptions = stringOptions.filter((code) => validCodes.has(code));
+
+        if (validOptions.length === 0) {
+          // No valid courses — treat as text
+          const label = `Complete ${node.amount} from: ${stringOptions.join(", ")}`;
+          await prisma.requirement.create({
+            data: {
+              name: label,
+              amount: node.amount,
+              isText: true,
+              templateId,
+              parentId,
+            },
+          });
+          reqCount++;
+          continue;
+        }
+
+        const groupName =
+          validOptions.length <= 3
+            ? validOptions.join(", ")
+            : `${validOptions[0]}...${validOptions[validOptions.length - 1]}`;
+
+        const group = await prisma.courseGroup.create({
+          data: { name: groupName },
+        });
+        groupCount++;
+
+        for (let i = 0; i < validOptions.length; i += BATCH_SIZE) {
+          const batch = validOptions.slice(i, i + BATCH_SIZE);
+          await prisma.courseGroupLink.createMany({
+            data: batch.map((code) => ({ groupId: group.id, courseCode: code })),
+          });
+        }
+
+        await prisma.requirement.create({
+          data: {
+            name: groupName,
+            amount: node.amount,
+            courseGroupId: group.id,
+            templateId,
+            parentId,
+          },
+        });
+        reqCount++;
+      } else {
+        // Mixed or all-objects → branch node with children
+        const branchName = `Complete ${node.amount} of the following`;
+        const branch = await prisma.requirement.create({
+          data: {
+            name: branchName,
+            amount: node.amount,
+            templateId,
+            parentId,
+          },
+        });
+        reqCount++;
+
+        // Recurse into all options as children
+        await seedRequirements(templateId, node.options, branch.id);
+      }
+    }
+  }
+
+  console.log(`Seeded ${templateCount} templates, ${reqCount} requirements, ${groupCount} course groups`);
+
+  // 7. Seed test user (no plan/template assigned)
   const user = await prisma.user.create({
     data: { email: "test@uwaterloo.ca", name: "Test User" },
   });
 
-  const plan = await prisma.plan.create({
-    data: {
-      name: "Computer Science, Honours, 2025 (Custom)",
-      userId: user.id,
-      templateId: template.id,
-    },
-  });
-
-  await prisma.planRequirement.createMany({
-    data: [
-      { name: "CS Core", amount: 3, planId: plan.id, courseGroupId: csCore.id },
-      {
-        name: "Math Core",
-        amount: 2,
-        planId: plan.id,
-        courseGroupId: mathCore.id,
-      },
-    ],
-  });
-
-  await prisma.termCourse.createMany({
-    data: [
-      { userId: user.id, courseCode: "CS145", term: "1A" },
-      { userId: user.id, courseCode: "MATH145", term: "1A" },
-      { userId: user.id, courseCode: "MATH137", term: "1A" },
-      { userId: user.id, courseCode: "COMMST100", term: "1A" },
-      { userId: user.id, courseCode: "AFM101", term: "1A" },
-      { userId: user.id, courseCode: "CS146", term: "1B" },
-      { userId: user.id, courseCode: "MATH148", term: "1B" },
-      { userId: user.id, courseCode: "COMMST225", term: "1B" },
-      { userId: user.id, courseCode: "MATH146", term: "1B" },
-      { userId: user.id, courseCode: "STAT230", term: "1B" },
-    ],
-  });
-
   console.log("Seeded user:", user.email);
-  console.log("Plan:", plan.name);
 }
 
 main()
