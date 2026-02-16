@@ -12908,7 +12908,10 @@
     "faculty": "MAT",
     "level": 100,
     "prerequisites": [
-      "CS145"
+      "CS145",
+      "CS115",
+      "CS116",
+      "CS135"
     ],
     "unlocks": [
       "AMATH242",
@@ -13073,7 +13076,18 @@
     "prerequisites": [
       "CS136",
       "CS138",
-      "CS146"
+      "CS146",
+      "CS245",
+      "CS245E",
+      "SE212",
+      "CS241",
+      "CS241E",
+      "CS246",
+      "CS246E",
+      "CS247",
+      "STAT206",
+      "STAT230",
+      "STAT240"
     ],
     "unlocks": [
       "CS341",
@@ -13133,7 +13147,9 @@
       "CS136L",
       "CS136",
       "CS146",
-      "CS138"
+      "CS138",
+      "CS246",
+      "CS246E"
     ],
     "unlocks": [
       "CS240",
@@ -13180,7 +13196,10 @@
     "level": 200,
     "prerequisites": [
       "CS136",
-      "CS146"
+      "CS146",
+      "CS138",
+      "MATH135",
+      "MATH145"
     ],
     "unlocks": [
       "CS240",
@@ -13233,7 +13252,8 @@
     "prerequisites": [
       "CS136L",
       "CS136",
-      "CS146"
+      "CS146",
+      "CS138"
     ],
     "unlocks": [
       "CS240",
@@ -13307,7 +13327,8 @@
     "level": 200,
     "prerequisites": [
       "CS136",
-      "CS146"
+      "CS146",
+      "CS138"
     ],
     "unlocks": [
       "CS350",
@@ -33753,7 +33774,8 @@
     "faculty": "MAT",
     "level": 100,
     "prerequisites": [
-      "MATH145"
+      "MATH145",
+      "MATH135"
     ],
     "unlocks": [
       "AMATH250",
@@ -33814,7 +33836,11 @@
     "faculty": "MAT",
     "level": 100,
     "prerequisites": [
-      "MATH147"
+      "MATH147",
+      "MATH116",
+      "MATH117",
+      "MATH127",
+      "MATH137"
     ],
     "unlocks": [
       "AMATH250",
@@ -34203,7 +34229,11 @@
     "faculty": "MAT",
     "level": 200,
     "prerequisites": [
-      "MATH146"
+      "MATH146",
+      "MATH136",
+      "MATH106",
+      "MATH114",
+      "MATH115"
     ],
     "unlocks": [
       "ACTSC372",
@@ -34277,7 +34307,8 @@
       "MATH145",
       "MATH135",
       "MATH136",
-      "MATH146"
+      "MATH146",
+      "MATH106"
     ],
     "unlocks": [
       "CO330",
@@ -53409,7 +53440,12 @@
       "MATH137",
       "MATH147",
       "MATH138",
-      "MATH148"
+      "MATH148",
+      "MATH116",
+      "MATH117",
+      "MATH128",
+      "MATH118",
+      "MATH119"
     ],
     "unlocks": [
       "AFM483",
@@ -53451,7 +53487,11 @@
       "MATH138",
       "MATH148",
       "STAT230",
-      "STAT240"
+      "STAT240",
+      "MATH118",
+      "MATH119",
+      "MATH128",
+      "STAT220"
     ],
     "unlocks": [
       "AFM207",
