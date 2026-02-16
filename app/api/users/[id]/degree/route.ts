@@ -17,6 +17,7 @@ const courseGroupInclude = {
 
 function requirementInclude(depth: number): any {
   const base: any = {
+    orderBy: { id: "asc" as const },
     include: {
       courseGroup: courseGroupInclude,
     },
@@ -24,12 +25,12 @@ function requirementInclude(depth: number): any {
   if (depth > 0) {
     base.include.children = requirementInclude(depth - 1);
   } else {
-    base.include.children = true;
+    base.include.children = { orderBy: { id: "asc" as const } };
   }
   return base;
 }
 
-const reqInclude = requirementInclude(4);
+const reqInclude = requirementInclude(2);
 
 export async function GET(request: NextRequest, { params }: Params) {
   const userId = await parseId(params);
@@ -37,38 +38,45 @@ export async function GET(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
   }
 
+  // First, check which type the user has (lightweight query)
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: {
-      template: {
-        include: {
-          requirements: {
-            where: { parentId: null },
-            ...reqInclude,
-          },
-        },
-      },
-      plan: {
-        include: {
-          template: true,
-          requirements: {
-            where: { parentId: null },
-            ...reqInclude,
-          },
-        },
-      },
-    },
+    include: { plan: true },
   });
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  return NextResponse.json({
-    type: user.plan ? "plan" : user.templateId ? "template" : "none",
-    template: user.template,
-    plan: user.plan,
-  });
+  // Only load the tree that's actually needed
+  if (user.plan) {
+    const plan = await prisma.plan.findUnique({
+      where: { id: user.plan.id },
+      include: {
+        template: true,
+        requirements: {
+          where: { parentId: null },
+          ...reqInclude,
+        },
+      },
+    });
+    return NextResponse.json({ type: "plan", template: null, plan });
+  }
+
+  if (user.templateId) {
+    const template = await prisma.template.findUnique({
+      where: { id: user.templateId },
+      include: {
+        requirements: {
+          where: { parentId: null },
+          ...reqInclude,
+        },
+      },
+    });
+    return NextResponse.json({ type: "template", template, plan: null });
+  }
+
+  return NextResponse.json({ type: "none", template: null, plan: null });
 }
 
 /**

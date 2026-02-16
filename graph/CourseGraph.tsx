@@ -187,7 +187,17 @@ export default function CourseGraph() {
     if (graphRef.current) {
       graphRef.current.graphData(data);
     } else {
-      graphRef.current = ForceGraph3DFn()(ref.current!)
+      // Wait for the container to have layout dimensions before creating the graph
+      const container = ref.current!;
+      if (container.clientWidth === 0 || container.clientHeight === 0) {
+        // Defer until next animation frame when layout is settled
+        requestAnimationFrame(() => loadData());
+        return;
+      }
+
+      graphRef.current = ForceGraph3DFn()(container)
+        .width(container.clientWidth)
+        .height(container.clientHeight)
         .graphData(data)
         .nodeLabel("title")
         .nodeColor((node: any) => {
@@ -256,7 +266,7 @@ export default function CourseGraph() {
     return () => channel.close();
   }, [loadData]);
 
-  // Keep canvas sized to container
+  // Keep canvas sized to container and re-center camera on resize
   useEffect(() => {
     const container = ref.current;
     if (!container) return;

@@ -70,88 +70,65 @@ async function copyRequirementTree(
 }
 
 /**
- * Recursively search for a PlanRequirement by courseGroupId in a tree.
- */
-function findPlanReqByGroupId(
-  reqs: any[],
-  groupId: number,
-): any | null {
-  for (const r of reqs) {
-    if (r.courseGroup?.id === groupId) return r;
-    if (r.children && r.children.length > 0) {
-      const found = findPlanReqByGroupId(r.children, groupId);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
-/**
  * Ensures the user has a plan with a private copy of the specified course group.
  * If the user is on a template, creates a plan and copies the whole tree.
  * If the user already has a plan but the group is shared, copies just that group.
  * Returns the private courseGroupId to modify.
  */
 async function ensurePrivateGroup(userId: number, courseGroupId: number) {
-  // Build recursive include (4 levels)
-  function reqInclude(depth: number): any {
-    const base: any = {
-      include: {
-        courseGroup: { include: { links: true } },
-      },
-    };
-    if (depth > 0) {
-      base.include.children = reqInclude(depth - 1);
-    } else {
-      base.include.children = true;
-    }
-    return base;
-  }
-
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: {
-      template: {
-        include: {
-          requirements: {
-            where: { parentId: null },
-            ...reqInclude(4),
-          },
-        },
-      },
-      plan: {
-        include: {
-          requirements: {
-            where: { parentId: null },
-            ...reqInclude(4),
-          },
-        },
-      },
-    },
+    include: { plan: true },
   });
 
   if (!user) return null;
 
-  // Case 1: User is on a template (no plan) — create a plan, copy entire tree
-  if (!user.plan && user.template) {
+  // Case 1: User is on a template (no plan) — need full tree to copy
+  if (!user.plan && user.templateId) {
+    function reqInclude(depth: number): any {
+      const base: any = {
+        orderBy: { id: "asc" as const },
+        include: {
+          courseGroup: { include: { links: true } },
+        },
+      };
+      if (depth > 0) {
+        base.include.children = reqInclude(depth - 1);
+      } else {
+        base.include.children = { orderBy: { id: "asc" as const } };
+      }
+      return base;
+    }
+
+    const template = await prisma.template.findUnique({
+      where: { id: user.templateId },
+      include: {
+        requirements: {
+          where: { parentId: null },
+          ...reqInclude(4),
+        },
+      },
+    });
+
+    if (!template) return null;
+
     const groupIdMap = new Map<number, number>();
 
     const plan = await prisma.plan.create({
       data: {
-        name: `${user.template.name} (Custom)`,
+        name: `${template.name} (Custom)`,
         userId,
-        templateId: user.template.id,
+        templateId: template.id,
       },
     });
 
     await copyRequirementTree(
       plan.id,
-      user.template.requirements as unknown as ReqTreeNode[],
+      template.requirements as unknown as ReqTreeNode[],
       null,
       groupIdMap,
     );
 
-    // Clear template reference
     await prisma.user.update({
       where: { id: userId },
       data: { templateId: null },
@@ -163,51 +140,51 @@ async function ensurePrivateGroup(userId: number, courseGroupId: number) {
     };
   }
 
-  // Case 2: User already has a plan
+  // Case 2: User already has a plan — find the requirement by courseGroupId directly
   if (user.plan) {
-    // Find the requirement anywhere in the tree
-    const planReq = findPlanReqByGroupId(
-      user.plan.requirements,
-      courseGroupId,
-    );
+    const planReq = await prisma.planRequirement.findFirst({
+      where: { planId: user.plan.id, courseGroupId },
+    });
 
-    if (planReq) {
-      // Check if this group is also used by any template requirement (shared)
-      const templateUsage = await prisma.requirement.findFirst({
-        where: { courseGroupId },
-      });
+    if (!planReq) return null;
 
-      if (!templateUsage) {
-        // Group is private to the plan, safe to modify directly
-        return { planId: user.plan.id, privateGroupId: courseGroupId };
-      }
+    // Check if this group is also used by any template requirement (shared)
+    const templateUsage = await prisma.requirement.findFirst({
+      where: { courseGroupId },
+    });
 
-      // Group is shared with a template — copy it
-      const originalGroup = planReq.courseGroup;
-      const copiedGroup = await prisma.courseGroup.create({
-        data: {
-          name: originalGroup.name,
-          links: {
-            createMany: {
-              data: originalGroup.links.map((l: any) => ({
-                courseCode: l.courseCode,
-              })),
-            },
-          },
-        },
-      });
-
-      // Update the plan requirement to point to the copy
-      await prisma.planRequirement.update({
-        where: { id: planReq.id },
-        data: { courseGroupId: copiedGroup.id },
-      });
-
-      return { planId: user.plan.id, privateGroupId: copiedGroup.id };
+    if (!templateUsage) {
+      // Group is private to the plan, safe to modify directly
+      return { planId: user.plan.id, privateGroupId: courseGroupId };
     }
 
-    // Group not found in plan requirements
-    return null;
+    // Group is shared with a template — copy it
+    const originalGroup = await prisma.courseGroup.findUnique({
+      where: { id: courseGroupId },
+      include: { links: true },
+    });
+
+    if (!originalGroup) return null;
+
+    const copiedGroup = await prisma.courseGroup.create({
+      data: {
+        name: originalGroup.name,
+        links: {
+          createMany: {
+            data: originalGroup.links.map((l) => ({
+              courseCode: l.courseCode,
+            })),
+          },
+        },
+      },
+    });
+
+    await prisma.planRequirement.update({
+      where: { id: planReq.id },
+      data: { courseGroupId: copiedGroup.id },
+    });
+
+    return { planId: user.plan.id, privateGroupId: copiedGroup.id };
   }
 
   return null;

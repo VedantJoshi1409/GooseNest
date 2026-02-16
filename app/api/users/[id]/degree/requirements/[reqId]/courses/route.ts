@@ -70,14 +70,30 @@ async function copyReqTree(
   }
 }
 
+function reqInclude(depth: number): any {
+  const base: any = {
+    orderBy: { id: "asc" as const },
+    include: {
+      courseGroup: { include: { links: true } },
+    },
+  };
+  if (depth > 0) {
+    base.include.children = reqInclude(depth - 1);
+  } else {
+    base.include.children = { orderBy: { id: "asc" as const } };
+  }
+  return base;
+}
+
 /**
- * PATCH /api/users/[id]/degree/requirements/[reqId]
- * Body: { forceCompleted: boolean }
+ * POST /api/users/[id]/degree/requirements/[reqId]/courses
+ * Body: { courseCode: string, term?: string }
  *
- * Toggles force-complete on a requirement. If user is on a template,
- * first copies the tree into a plan.
+ * Adds a course to a requirement. If the requirement has no courseGroup,
+ * creates one first. If the user is on a template, copies into a plan first.
+ * If term is provided, also schedules the course in that term.
  */
-export async function PATCH(request: NextRequest, { params }: Params) {
+export async function POST(request: NextRequest, { params }: Params) {
   const parsed = await parseParams(params);
   if (!parsed) {
     return NextResponse.json({ error: "Invalid IDs" }, { status: 400 });
@@ -85,13 +101,19 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   const { userId, requirementId } = parsed;
   const body = await request.json();
-  const { forceCompleted } = body;
+  const { courseCode, term } = body;
 
-  if (typeof forceCompleted !== "boolean") {
+  if (!courseCode || typeof courseCode !== "string") {
     return NextResponse.json(
-      { error: "forceCompleted (boolean) is required" },
+      { error: "courseCode (string) is required" },
       { status: 400 },
     );
+  }
+
+  // Verify course exists
+  const course = await prisma.course.findUnique({ where: { code: courseCode } });
+  if (!course) {
+    return NextResponse.json({ error: "Course not found" }, { status: 404 });
   }
 
   const user = await prisma.user.findUnique({
@@ -103,25 +125,13 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  let planReqId: number;
+  let planId: number;
+
   // If user is on a template, load the full tree and copy into a plan
   if (!user.plan && user.templateId) {
-    function reqInclude(depth: number): any {
-      const base: any = {
-        orderBy: { id: "asc" as const },
-        include: {
-          courseGroup: { include: { links: true } },
-        },
-      };
-      if (depth > 0) {
-        base.include.children = reqInclude(depth - 1);
-      } else {
-        base.include.children = { orderBy: { id: "asc" as const } };
-      }
-      return base;
-    }
-
     const template = await prisma.template.findUnique({
-      where: { id: user.templateId! },
+      where: { id: user.templateId },
       include: {
         requirements: {
           where: { parentId: null },
@@ -156,35 +166,90 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       data: { templateId: null },
     });
 
-    // Find the corresponding plan requirement
-    const planReqId = reqIdMap.get(requirementId);
-    if (!planReqId) {
+    const mappedId = reqIdMap.get(requirementId);
+    if (!mappedId) {
       return NextResponse.json(
         { error: "Requirement not found in copied plan" },
         { status: 404 },
       );
     }
 
-    const updated = await prisma.planRequirement.update({
-      where: { id: planReqId },
-      data: { forceCompleted },
-    });
-
-    return NextResponse.json({ planRequirement: updated, planId: plan.id });
-  }
-
-  // User already has a plan — update directly
-  if (user.plan) {
-    const updated = await prisma.planRequirement.update({
+    planReqId = mappedId;
+    planId = plan.id;
+  } else if (user.plan) {
+    // Verify requirement exists in the plan with a direct query
+    const exists = await prisma.planRequirement.findFirst({
       where: { id: requirementId, planId: user.plan.id },
-      data: { forceCompleted },
     });
-
-    return NextResponse.json({ planRequirement: updated, planId: user.plan.id });
+    if (!exists) {
+      return NextResponse.json(
+        { error: "Requirement not found in plan" },
+        { status: 404 },
+      );
+    }
+    planReqId = requirementId;
+    planId = user.plan.id;
+  } else {
+    return NextResponse.json(
+      { error: "No degree selected" },
+      { status: 400 },
+    );
   }
 
-  return NextResponse.json(
-    { error: "No degree selected" },
-    { status: 400 },
-  );
+  // Fetch the plan requirement to check if it has a courseGroup
+  const planReq = await prisma.planRequirement.findUnique({
+    where: { id: planReqId },
+  });
+
+  if (!planReq) {
+    return NextResponse.json(
+      { error: "Plan requirement not found" },
+      { status: 404 },
+    );
+  }
+
+  let groupId = planReq.courseGroupId;
+
+  // Create a courseGroup if the requirement doesn't have one
+  if (!groupId) {
+    const newGroup = await prisma.courseGroup.create({
+      data: { name: planReq.name },
+    });
+
+    await prisma.planRequirement.update({
+      where: { id: planReqId },
+      data: { courseGroupId: newGroup.id },
+    });
+
+    groupId = newGroup.id;
+  }
+
+  // Check if course is already in the group
+  const existing = await prisma.courseGroupLink.findUnique({
+    where: { groupId_courseCode: { groupId, courseCode } },
+  });
+
+  if (existing) {
+    return NextResponse.json(
+      { error: "Course already in this requirement" },
+      { status: 409 },
+    );
+  }
+
+  // Add the course link
+  const link = await prisma.courseGroupLink.create({
+    data: { groupId, courseCode },
+    include: { course: true },
+  });
+
+  // Optionally schedule the course
+  if (term && typeof term === "string") {
+    await prisma.termCourse.upsert({
+      where: { userId_courseCode: { userId, courseCode } },
+      create: { userId, courseCode, term },
+      update: { term },
+    });
+  }
+
+  return NextResponse.json({ link, groupId, planId }, { status: 201 });
 }

@@ -16,6 +16,7 @@ const courseGroupInclude = {
 
 function requirementInclude(depth: number): any {
   const base: any = {
+    orderBy: { id: "asc" as const },
     include: {
       courseGroup: courseGroupInclude,
     },
@@ -23,7 +24,7 @@ function requirementInclude(depth: number): any {
   if (depth > 0) {
     base.include.children = requirementInclude(depth - 1);
   } else {
-    base.include.children = true;
+    base.include.children = { orderBy: { id: "asc" as const } };
   }
   return base;
 }

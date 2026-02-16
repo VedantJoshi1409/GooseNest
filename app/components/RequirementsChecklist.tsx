@@ -43,17 +43,12 @@ const TERMS = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
 const USER_ID = 1;
 
 /**
- * Recursive fulfillment check:
- * - Text node: fulfilled if forceCompleted
- * - Leaf node (has courseGroup): fulfilled if completed courses >= amount, or forceCompleted
- * - Branch node (has children): fulfilled if N children fulfilled (N = amount), or forceCompleted
+ * Check if a node is naturally fulfilled (by courses alone, ignoring forceCompleted).
  */
-function isNodeFulfilled(
+function isNaturallyFulfilled(
   node: RequirementNode,
   completedCourses: Set<string>,
 ): boolean {
-  if (node.forceCompleted) return true;
-
   if (node.isText) return false;
 
   if (node.courseGroup) {
@@ -65,7 +60,7 @@ function isNodeFulfilled(
 
   if (node.children && node.children.length > 0) {
     const fulfilledChildren = node.children.filter((c) =>
-      isNodeFulfilled(c, completedCourses),
+      isNaturallyFulfilled(c, completedCourses) || !!c.forceCompleted,
     ).length;
     return fulfilledChildren >= node.amount;
   }
@@ -73,13 +68,15 @@ function isNodeFulfilled(
   return false;
 }
 
-function isNodeFulfilledWithPlanned(
+/**
+ * Check if a node is fulfilled when counting planned courses too.
+ */
+function isFulfilledWithPlanned(
   node: RequirementNode,
   completedCourses: Set<string>,
   plannedCourses: Set<string>,
 ): boolean {
   if (node.forceCompleted) return true;
-
   if (node.isText) return false;
 
   if (node.courseGroup) {
@@ -94,7 +91,7 @@ function isNodeFulfilledWithPlanned(
 
   if (node.children && node.children.length > 0) {
     const fulfilledChildren = node.children.filter((c) =>
-      isNodeFulfilledWithPlanned(c, completedCourses, plannedCourses),
+      isFulfilledWithPlanned(c, completedCourses, plannedCourses),
     ).length;
     return fulfilledChildren >= node.amount;
   }
@@ -175,10 +172,15 @@ export default function RequirementsChecklist() {
     if (res.ok) setDegreeData(await res.json());
   };
 
-  const handleSelectCourse = (course: SearchResult, courseGroupId: number) => {
+  const handleSelectCourse = (course: SearchResult, courseGroupId: number | null, reqId?: number) => {
     const isAlreadyScheduled = completedCourses.has(course.code) || plannedCourses.has(course.code);
     if (isAlreadyScheduled) {
-      handleAddToGroupOnly(courseGroupId, course.code);
+      if (courseGroupId === null && reqId !== undefined) {
+        // Requirement without courseGroup — create group via reqId-based API
+        handleAddToTextReq(reqId, course.code);
+      } else if (courseGroupId !== null) {
+        handleAddToGroupOnly(courseGroupId, course.code);
+      }
     } else {
       setSelectedCourse(course);
     }
@@ -226,6 +228,29 @@ export default function RequirementsChecklist() {
       closePanel();
     } catch (error) {
       console.error("Error adding course to requirement:", error);
+    }
+  };
+
+  const handleAddToTextReq = async (
+    reqId: number,
+    courseCode: string,
+    term?: string,
+  ) => {
+    try {
+      const res = await fetch(`/api/users/${USER_ID}/degree/requirements/${reqId}/courses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseCode, term }),
+      });
+      if (!res.ok) return;
+      await refreshDegreeData();
+      if (term) {
+        setPlannedCourses((prev) => new Set(prev).add(courseCode));
+        channelRef.current?.postMessage("changed");
+      }
+      closePanel();
+    } catch (error) {
+      console.error("Error adding course to text requirement:", error);
     }
   };
 
@@ -360,8 +385,6 @@ export default function RequirementsChecklist() {
       ? degreeData.plan?.template?.name
       : null;
 
-  const isPlan = degreeData.type === "plan";
-
   if (!requirements || requirements.length === 0) {
     return (
       <div className="p-4">
@@ -383,12 +406,12 @@ export default function RequirementsChecklist() {
     let planned = 0;
     for (const node of nodes) {
       total++;
-      const isFulfilled = isNodeFulfilled(node, completedCourses);
-      const isForced = !isFulfilled && !!node.forceCompleted;
-      const isFulfilledWithPlanned = !isFulfilled && !isForced && isNodeFulfilledWithPlanned(node, completedCourses, plannedCourses);
-      if (isFulfilled) fulfilled++;
+      const natural = isNaturallyFulfilled(node, completedCourses);
+      const isForced = !natural && !!node.forceCompleted;
+      const plannedOk = !natural && !isForced && isFulfilledWithPlanned(node, completedCourses, plannedCourses);
+      if (natural) fulfilled++;
       if (isForced) forced++;
-      if (isFulfilledWithPlanned) planned++;
+      if (plannedOk) planned++;
     }
     return { total, fulfilled, forced, planned };
   };
@@ -397,45 +420,50 @@ export default function RequirementsChecklist() {
 
   // Recursive requirement renderer
   function RequirementItem({ req, depth = 0 }: { req: RequirementNode; depth?: number }) {
-    const fulfilled = isNodeFulfilled(req, completedCourses);
-    const isForced = !fulfilled && !!req.forceCompleted;
-    const fulfilledWithPlanned = !fulfilled && !isForced && isNodeFulfilledWithPlanned(req, completedCourses, plannedCourses);
+    const natural = isNaturallyFulfilled(req, completedCourses);
+    const isForced = !!req.forceCompleted;
+    const fulfilled = natural || isForced;
+    const fulfilledWithPlanned = !fulfilled && isFulfilledWithPlanned(req, completedCourses, plannedCourses);
     const isAdding = addingToReq === req.id;
-    const isLeafWithGroup = !req.isText && req.courseGroup !== null && (!req.children || req.children.length === 0);
+    const isLeaf = !req.isText && (!req.children || req.children.length === 0);
+    const isLeafWithGroup = isLeaf && req.courseGroup !== null;
+    const isLeafWithoutGroup = isLeaf && req.courseGroup === null;
     const isBranch = !req.isText && req.children && req.children.length > 0;
     const isText = req.isText;
+    const needsReqApi = isText || isLeafWithoutGroup; // nodes without a courseGroup use the reqId-based API
 
     const eligible = req.courseGroup?.links || [];
     const completedLinks = eligible.filter((l) => completedCourses.has(l.courseCode));
     const plannedLinks = eligible.filter((l) => plannedCourses.has(l.courseCode));
 
-    const canForceComplete = isPlan && !fulfilled;
+    // Naturally fulfilled + not forced = disabled (can't toggle)
+    // Forced (with or without natural) = clickable to undo
+    // Not fulfilled at all = clickable to force
+    const canClick = isForced || !natural;
 
     return (
       <div className={depth > 0 ? "ml-4 border-l border-[var(--goose-mist)] pl-3" : ""}>
         <div className="flex items-center gap-2 mb-1">
           <button
             onClick={() => {
-              if (canForceComplete) {
-                handleForceComplete(req.id, !!req.forceCompleted);
+              if (canClick) {
+                handleForceComplete(req.id, isForced);
               }
             }}
-            disabled={fulfilled || !isPlan}
+            disabled={!canClick}
             className={`w-4 h-4 rounded-sm border flex items-center justify-center flex-shrink-0 transition-colors ${
-              fulfilled
+              natural && !isForced
                 ? "bg-[var(--goose-ink)] border-[var(--goose-ink)] cursor-default"
                 : isForced
                   ? "bg-amber-500 border-amber-500 cursor-pointer hover:bg-amber-600"
                   : fulfilledWithPlanned
                     ? "bg-blue-500 border-blue-500 cursor-pointer hover:bg-blue-600"
-                    : isPlan
-                      ? "border-[var(--goose-slate)] cursor-pointer hover:border-[var(--goose-ink)] hover:bg-[var(--goose-mist)]/30"
-                      : "border-[var(--goose-slate)] cursor-default"
+                    : "border-[var(--goose-slate)] cursor-pointer hover:border-[var(--goose-ink)] hover:bg-[var(--goose-mist)]/30"
             }`}
             aria-label={isForced ? `Unmark ${req.name} as complete` : `Mark ${req.name} as complete`}
-            title={isForced ? "Click to unmark override" : fulfilled ? "Completed" : isPlan ? "Click to mark as complete (override)" : "Select a degree plan to override"}
+            title={isForced ? "Click to unmark override" : natural ? "Completed" : "Click to mark as complete (override)"}
           >
-            {fulfilled && (
+            {natural && !isForced && (
               <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="var(--goose-cream)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M2 6l3 3 5-5" />
               </svg>
@@ -445,7 +473,7 @@ export default function RequirementsChecklist() {
                 <path d="M2 6l3 3 5-5" />
               </svg>
             )}
-            {!fulfilled && !isForced && fulfilledWithPlanned && (
+            {!fulfilled && fulfilledWithPlanned && (
               <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M2 6h8" />
               </svg>
@@ -453,7 +481,7 @@ export default function RequirementsChecklist() {
           </button>
           <span
             className={`text-sm font-medium flex-1 ${
-              fulfilled || isForced
+              fulfilled
                 ? "text-[var(--goose-slate)] line-through"
                 : "text-[var(--goose-ink)]"
             }`}
@@ -467,8 +495,8 @@ export default function RequirementsChecklist() {
               <span className="text-[10px] text-amber-600 ml-1 no-underline inline-block">(overridden)</span>
             )}
           </span>
-          {/* Add course button — only on leaf nodes with courseGroup */}
-          {isLeafWithGroup && !fulfilled && !isForced && (
+          {/* Add course button — on leaf nodes and text nodes */}
+          {(isLeaf || isText) && !fulfilled && !isForced && (
             <button
               onClick={() => {
                 if (isAdding) {
@@ -489,8 +517,8 @@ export default function RequirementsChecklist() {
           )}
         </div>
 
-        {/* Add course panel for leaf nodes */}
-        {isLeafWithGroup && isAdding && (
+        {/* Add course panel for leaf nodes and text requirements */}
+        {(isLeaf || isText) && isAdding && (
           <div ref={panelRef} className="ml-6 mb-2 border border-[var(--goose-ink)] rounded p-2 bg-[var(--goose-cream)] shadow-sm">
             <input
               type="text"
@@ -516,7 +544,11 @@ export default function RequirementsChecklist() {
                   return (
                     <button
                       key={course.code}
-                      onClick={() => !alreadyInGroup && handleSelectCourse(course, req.courseGroup!.id)}
+                      onClick={() => !alreadyInGroup && handleSelectCourse(
+                        course,
+                        req.courseGroup?.id ?? null,
+                        needsReqApi ? req.id : undefined,
+                      )}
                       disabled={alreadyInGroup}
                       className={`w-full text-left text-xs px-1.5 py-1 rounded transition-colors ${
                         alreadyInGroup
@@ -547,7 +579,13 @@ export default function RequirementsChecklist() {
                   {TERMS.filter((t) => TERMS.indexOf(t) >= TERMS.indexOf(currentTerm)).map((term) => (
                     <button
                       key={term}
-                      onClick={() => handleAddToRequirement(req.courseGroup!.id, selectedCourse.code, term)}
+                      onClick={() => {
+                        if (!req.courseGroup) {
+                          handleAddToTextReq(req.id, selectedCourse.code, term);
+                        } else {
+                          handleAddToRequirement(req.courseGroup.id, selectedCourse.code, term);
+                        }
+                      }}
                       className="text-[10px] px-2 py-0.5 border border-[var(--goose-mist)] rounded hover:border-[var(--goose-ink)] hover:bg-[var(--goose-mist)]/30 transition-colors"
                     >
                       {term}
@@ -556,6 +594,60 @@ export default function RequirementsChecklist() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Course list for text requirements with courses added */}
+        {isText && req.courseGroup && eligible.length > 0 && (
+          <div className="ml-6">
+            <div className={`space-y-0.5 ${eligible.length > 5 ? "max-h-[100px] overflow-y-auto pr-1" : ""}`}>
+              {eligible.map((link) => {
+                const isCompleted = completedCourses.has(link.courseCode);
+                const isPlanned = plannedCourses.has(link.courseCode);
+                const isMissing = missingPrereqs.has(link.courseCode);
+                return (
+                  <div
+                    key={link.courseCode}
+                    className={`text-xs flex items-center gap-1.5 group ${
+                      isMissing
+                        ? "text-red-500"
+                        : isCompleted
+                          ? "text-[var(--goose-slate)]"
+                          : isPlanned
+                            ? "text-blue-600"
+                            : "text-[var(--goose-ink)]"
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                        isMissing
+                          ? "bg-red-500"
+                          : isCompleted
+                            ? "bg-[var(--goose-ink)]"
+                            : isPlanned
+                              ? "bg-blue-500"
+                              : "bg-[var(--goose-mist)]"
+                      }`}
+                    />
+                    <span className={`flex-1 ${isCompleted && !isMissing ? "line-through" : ""}`}>
+                      {link.courseCode}
+                      {isMissing && " (prereqs missing)"}
+                      {!isMissing && isPlanned && " (planned)"}
+                    </span>
+                    <button
+                      onClick={() => handleRemoveFromGroup(req.courseGroup!.id, link.courseCode)}
+                      className="opacity-0 group-hover:opacity-100 text-[var(--goose-slate)] hover:text-red-500 transition-all shrink-0"
+                      aria-label={`Remove ${link.courseCode} from ${req.name}`}
+                      title="Remove from requirement"
+                    >
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                        <path d="M3 3l6 6M9 3l-6 6" />
+                      </svg>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -651,7 +743,7 @@ export default function RequirementsChecklist() {
         )}
       </p>
 
-      <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+      <div className="flex-1 overflow-y-auto space-y-4 pr-1" style={{ scrollbarWidth: "none" }}>
         {requirements.map((req) => (
           <RequirementItem key={req.id} req={req} />
         ))}

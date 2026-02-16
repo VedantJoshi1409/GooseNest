@@ -31,27 +31,27 @@ export default function DegreePlannerPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden">
       <Navbar />
 
       {/* Current Degree Bar */}
-      <section className="max-w-7xl w-full mx-auto px-8 py-4">
-        <div className="border border-[var(--goose-ink)] p-4 md:p-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <section className="max-w-7xl w-full mx-auto px-8 py-3 flex-shrink-0">
+        <div className="border border-[var(--goose-ink)] p-3 md:p-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <div>
-              <h1 className="font-display text-xl md:text-2xl font-bold text-[var(--goose-ink)] mb-1">
+              <h1 className="font-display text-lg md:text-xl font-bold text-[var(--goose-ink)] mb-0.5">
                 Current degree
               </h1>
               {isLoading ? (
-                <p className="text-base text-[var(--goose-slate)] italic">
+                <p className="text-sm text-[var(--goose-slate)] italic">
                   Loading...
                 </p>
               ) : selectedTemplate ? (
-                <p className="text-base text-[var(--goose-ink)]">
+                <p className="text-sm text-[var(--goose-ink)]">
                   {selectedTemplate.name}
                 </p>
               ) : (
-                <p className="text-base text-[var(--goose-slate)] italic">
+                <p className="text-sm text-[var(--goose-slate)] italic">
                   No degree selected
                 </p>
               )}
@@ -68,8 +68,8 @@ export default function DegreePlannerPage() {
       </section>
 
       {/* Requirements Checklist + 3D Course Graph */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-8 py-4 flex gap-4 h-[calc(100vh-200px)]">
-        <aside className="w-64 flex-shrink-0 border border-[var(--goose-mist)] rounded-lg overflow-hidden">
+      <main className="flex-1 min-h-0 max-w-7xl w-full mx-auto px-8 pb-4 flex gap-4">
+        <aside className="w-64 flex-shrink-0 border border-[var(--goose-mist)] rounded-lg overflow-hidden flex flex-col">
           <RequirementsChecklist key={degreeVersion} />
         </aside>
         <div className="flex-1 border border-[var(--goose-mist)] rounded-lg overflow-hidden">
