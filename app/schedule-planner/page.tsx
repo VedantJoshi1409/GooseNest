@@ -316,7 +316,7 @@ export default function SchedulePlannerPage() {
         </section>
 
         {/* Courses for Selected Term Section */}
-        <section className="border border-[var(--goose-ink)] p-8 md:p-12">
+        <section className="border border-[var(--goose-ink)] rounded-xl p-8 md:p-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-display text-2xl md:text-3xl font-bold text-[var(--goose-ink)]">
               Courses for Term {selectedTerm}

@@ -7,12 +7,28 @@ export default function FeaturesGrid() {
       title: "Select your path",
       description: "Choose and modify your degree program with ease.",
       href: "/degree-planner",
+      image: "/feature-degree.png",
     },
     {
       category: "Schedule",
       title: "Plan term by term",
       description: "Organize your courses across all semesters ahead.",
       href: "/schedule-planner",
+      image: "/feature-schedule.png",
+    },
+    {
+      category: "Prerequisites",
+      title: "Check prerequisites",
+      description: "Instantly see missing prerequisites and plan around them.",
+      href: "/degree-planner",
+      image: "/feature-prereq.png",
+    },
+    {
+      category: "Unlocks",
+      title: "View what you unlock",
+      description: "Discover which courses your completed classes open up.",
+      href: "/schedule-planner",
+      image: "/feature-unlock.png",
     },
   ];
 
@@ -33,8 +49,8 @@ export default function FeaturesGrid() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 md:gap-8">
         {features.map((feature, index) => (
           <div
-            key={feature.href}
-            className={`fade-up ${index === 1 ? "delay-1" : index === 2 ? "delay-2" : ""}`}
+            key={index}
+            className={`fade-up ${index % 2 === 1 ? "delay-1" : ""}`}
           >
             <FeatureCard {...feature} />
           </div>

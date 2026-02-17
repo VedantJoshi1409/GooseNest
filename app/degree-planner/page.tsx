@@ -36,7 +36,7 @@ export default function DegreePlannerPage() {
 
       {/* Current Degree Bar */}
       <section className="max-w-7xl w-full mx-auto px-8 py-3 flex-shrink-0">
-        <div className="border border-[var(--goose-ink)] p-3 md:p-4">
+        <div className="border border-[var(--goose-ink)] rounded-xl p-3 md:p-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <div>
               <h1 className="font-display text-lg md:text-xl font-bold text-[var(--goose-ink)] mb-0.5">

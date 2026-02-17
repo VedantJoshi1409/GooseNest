@@ -35,31 +35,27 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load cached data on mount
+  // Load cached templates list on mount (not the selected template — that comes from DB per user)
   useEffect(() => {
-    const loadCachedData = () => {
-      try {
-        // Load templates list
-        const cachedTemplates = sessionStorage.getItem(STORAGE_KEY);
-        if (cachedTemplates) {
-          setTemplates(JSON.parse(cachedTemplates));
-        }
-
-        // Load selected template
-        const cachedSelectedTemplate = sessionStorage.getItem(SELECTED_TEMPLATE_KEY);
-        if (cachedSelectedTemplate) {
-          setSelectedTemplate(JSON.parse(cachedSelectedTemplate));
-        }
-      } catch (err) {
-        console.error("Error loading cached data:", err);
+    try {
+      const cachedTemplates = sessionStorage.getItem(STORAGE_KEY);
+      if (cachedTemplates) {
+        setTemplates(JSON.parse(cachedTemplates));
       }
-    };
-
-    loadCachedData();
+    } catch (err) {
+      console.error("Error loading cached data:", err);
+    }
   }, []);
 
-  // Fetch all templates and user's saved degree on mount
+  // Fetch all templates and user's saved degree
   useEffect(() => {
+    if (!user) {
+      setSelectedTemplate(null);
+      sessionStorage.removeItem(SELECTED_TEMPLATE_KEY);
+      setIsLoading(false);
+      return;
+    }
+
     const fetchInitialData = async () => {
       try {
         setIsLoading(true);
@@ -74,8 +70,8 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        // Load user's saved degree from DB if no template selected yet
-        if (!selectedTemplate && user) {
+        // Always load user's degree from DB when user changes
+        if (user) {
           const degreeRes = await fetch(`/api/users/${user.id}/degree`);
           if (degreeRes.ok) {
             const degreeData = await degreeRes.json();

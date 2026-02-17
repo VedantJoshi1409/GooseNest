@@ -18,8 +18,8 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-8 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="font-display text-xl font-bold text-[var(--goose-ink)] hover:opacity-80 transition-opacity">
-            Logo
+          <Link href="/" className="hover:opacity-80 transition-opacity">
+            <img src="/logo.png" alt="GooseNest" width={40} height={40} />
           </Link>
 
           {/* Navigation Links */}

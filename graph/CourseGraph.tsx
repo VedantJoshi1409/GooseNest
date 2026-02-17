@@ -104,7 +104,8 @@ export default function CourseGraph() {
     // Build set of courses per term for prereq checking
     const coursesByTerm = new Map<string, Set<string>>();
     for (const entry of scheduleData.entries) {
-      if (!coursesByTerm.has(entry.term)) coursesByTerm.set(entry.term, new Set());
+      if (!coursesByTerm.has(entry.term))
+        coursesByTerm.set(entry.term, new Set());
       coursesByTerm.get(entry.term)!.add(entry.courseCode);
     }
 
@@ -122,7 +123,10 @@ export default function CourseGraph() {
       // Find which term this course is in
       let courseTerm: string | null = null;
       for (const entry of scheduleData.entries) {
-        if (entry.courseCode === node.id) { courseTerm = entry.term; break; }
+        if (entry.courseCode === node.id) {
+          courseTerm = entry.term;
+          break;
+        }
       }
       if (!courseTerm) continue;
       const courseTermIndex = TERMS.indexOf(courseTerm);
@@ -246,7 +250,7 @@ export default function CourseGraph() {
       const controls = graphRef.current?.controls() as any;
       if (controls) {
         controls.enablePan = false;
-        controls.maxDistance = 800;
+        controls.maxDistance = 2000;
         controls.minDistance = 50;
       }
 

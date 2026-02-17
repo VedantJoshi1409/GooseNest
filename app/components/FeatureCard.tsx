@@ -5,28 +5,28 @@ interface FeatureCardProps {
   title: string;
   description: string;
   href: string;
+  image?: string;
 }
 
-export default function FeatureCard({ category, title, description, href }: FeatureCardProps) {
+export default function FeatureCard({ category, title, description, href, image }: FeatureCardProps) {
   return (
-    <div className="border border-[var(--goose-ink)] group hover:border-[var(--goose-slate)] transition-colors">
-      {/* Image Placeholder */}
-      <div className="aspect-video bg-[#e5e5e5] flex items-center justify-center">
-        <svg
-          width="80"
-          height="80"
-          viewBox="0 0 80 80"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="text-[#b8b8b8]"
-        >
-          <rect width="80" height="80" fill="transparent"/>
-          <path
-            d="M26 33L33 26L50 43L56 37L63 43V56H17V43L26 33Z"
-            fill="currentColor"
+    <div className="border border-[var(--goose-ink)] rounded-xl overflow-hidden group hover:border-[var(--goose-slate)] transition-colors">
+      {/* Feature Image */}
+      <div className="aspect-video relative overflow-hidden bg-[var(--goose-mist)]/30">
+        {image ? (
+          <img
+            src={image}
+            alt={title}
+            className="object-cover object-top w-full h-full"
           />
-          <circle cx="28" cy="23" r="5" fill="currentColor"/>
-        </svg>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="text-[#b8b8b8]">
+              <path d="M26 33L33 26L50 43L56 37L63 43V56H17V43L26 33Z" fill="currentColor"/>
+              <circle cx="28" cy="23" r="5" fill="currentColor"/>
+            </svg>
+          </div>
+        )}
       </div>
 
       {/* Card Content */}
