@@ -3,6 +3,7 @@ import { Space_Grotesk, Work_Sans } from "next/font/google";
 import "./globals.css";
 import { TemplateProvider } from "./context/TemplateContext";
 import { AuthProvider } from "./context/AuthContext";
+import { Analytics } from "@vercel/analytics/next";
 
 const workSans = Work_Sans({
   variable: "--font-body",
@@ -33,6 +34,7 @@ export default function RootLayout({
         <AuthProvider>
           <TemplateProvider>{children}</TemplateProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
