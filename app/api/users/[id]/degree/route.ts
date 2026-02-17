@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma, deleteUserPlansWithCustomGroups } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 type Params = { params: Promise<{ id: string }> };
@@ -32,13 +32,67 @@ function requirementInclude(depth: number): any {
 
 const reqInclude = requirementInclude(2);
 
+// Recursive type for requirement trees
+interface ReqTreeNode {
+  id: number;
+  name: string;
+  amount: number;
+  isText: boolean;
+  courseGroupId: number | null;
+  courseGroup: { id: number; name: string; links: { courseCode: string }[] } | null;
+  children: ReqTreeNode[];
+}
+
+/**
+ * Recursively copy template requirements into PlanRequirements.
+ */
+async function copyReqTree(
+  planId: number,
+  reqs: ReqTreeNode[],
+  parentId: number | null,
+) {
+  for (const req of reqs) {
+    let newGroupId = req.courseGroupId;
+
+    if (req.courseGroup && req.courseGroupId) {
+      const copiedGroup = await prisma.courseGroup.create({
+        data: {
+          name: req.courseGroup.name,
+          links: {
+            createMany: {
+              data: req.courseGroup.links.map((l) => ({
+                courseCode: l.courseCode,
+              })),
+            },
+          },
+        },
+      });
+      newGroupId = copiedGroup.id;
+    }
+
+    const planReq = await prisma.planRequirement.create({
+      data: {
+        name: req.name,
+        amount: req.amount,
+        isText: req.isText,
+        courseGroupId: newGroupId,
+        planId,
+        parentId,
+      },
+    });
+
+    if (req.children && req.children.length > 0) {
+      await copyReqTree(planId, req.children, planReq.id);
+    }
+  }
+}
+
 export async function GET(request: NextRequest, { params }: Params) {
   const userId = await parseId(params);
   if (!userId) {
     return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
   }
 
-  // First, check which type the user has (lightweight query)
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: { plan: true },
@@ -48,7 +102,6 @@ export async function GET(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  // Only load the tree that's actually needed
   if (user.plan) {
     const plan = await prisma.plan.findUnique({
       where: { id: user.plan.id },
@@ -60,39 +113,20 @@ export async function GET(request: NextRequest, { params }: Params) {
         },
       },
     });
-    return NextResponse.json({ type: "plan", template: null, plan });
+    return NextResponse.json({ type: "plan", plan });
   }
 
-  if (user.templateId) {
-    const template = await prisma.template.findUnique({
-      where: { id: user.templateId },
-      include: {
-        requirements: {
-          where: { parentId: null },
-          ...reqInclude,
-        },
-      },
-    });
-    return NextResponse.json({ type: "template", template, plan: null });
-  }
-
-  return NextResponse.json({ type: "none", template: null, plan: null });
+  return NextResponse.json({ type: "none", plan: null });
 }
 
 /**
  * POST /api/users/[id]/degree
  *
- * Body for default template (no modifications):
- *   { "templateId": 1 }
- *
- * Body for custom plan (modifications made):
+ * Always creates a Plan copy. Body:
  *   {
  *     "templateId": 1,
- *     "name": "My CS Plan",
- *     "requirements": [
- *       { "name": "CS Core", "amount": 3, "courseGroupId": 1 },
- *       { "name": "Custom Electives", "amount": 2, "courseCodes": ["CS135", "MATH135"] }
- *     ]
+ *     "name": "My CS Plan",          // optional
+ *     "requirements": [...]           // optional — if omitted, copies all from template
  *   }
  */
 export async function POST(request: NextRequest, { params }: Params) {
@@ -108,23 +142,56 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "templateId is required" }, { status: 400 });
   }
 
-  // Delete any existing plan for this user
-  await prisma.plan.deleteMany({ where: { userId } });
+  // Delete any existing plan and its custom course groups
+  await deleteUserPlansWithCustomGroups(userId);
 
-  const isCustom = requirements && requirements.length > 0;
+  const hasCustomRequirements = requirements && requirements.length > 0;
 
-  if (!isCustom) {
-    // No modifications — just link the template directly
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: { templateId },
-      include: { template: true },
+  if (!hasCustomRequirements) {
+    // No custom requirements — copy all requirements from the template
+    const template = await prisma.template.findUnique({
+      where: { id: templateId },
+      include: {
+        requirements: {
+          where: { parentId: null },
+          ...requirementInclude(4),
+        },
+      },
     });
 
-    return NextResponse.json({ type: "template", template: user.template });
+    if (!template) {
+      return NextResponse.json({ error: "Template not found" }, { status: 404 });
+    }
+
+    const plan = await prisma.plan.create({
+      data: {
+        name: name || template.name,
+        userId,
+        templateId,
+      },
+    });
+
+    await copyReqTree(
+      plan.id,
+      template.requirements as unknown as ReqTreeNode[],
+      null,
+    );
+
+    const fullPlan = await prisma.plan.findUnique({
+      where: { id: plan.id },
+      include: {
+        template: true,
+        requirements: {
+          where: { parentId: null },
+          ...reqInclude,
+        },
+      },
+    });
+
+    return NextResponse.json({ type: "plan", plan: fullPlan }, { status: 201 });
   }
 
-  // Custom plan — create plan with requirements
+  // Custom requirements — create plan with provided requirements
   const plan = await prisma.plan.create({
     data: {
       name: name || `Custom Plan`,
@@ -185,12 +252,6 @@ export async function POST(request: NextRequest, { params }: Params) {
       });
     }
   }
-
-  // Clear the default template reference since we're using a custom plan
-  await prisma.user.update({
-    where: { id: userId },
-    data: { templateId: null },
-  });
 
   const fullPlan = await prisma.plan.findUnique({
     where: { id: plan.id },

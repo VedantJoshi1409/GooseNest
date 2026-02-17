@@ -72,7 +72,6 @@ export default function DegreeModal({
   const [planName, setPlanName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
   const [originalDegreeId, setOriginalDegreeId] = useState<number | null>(null);
-  const [originalType, setOriginalType] = useState<"template" | "plan" | "none">("none");
   const [isDirty, setIsDirty] = useState(false);
 
   // Custom requirement form state
@@ -199,26 +198,11 @@ export default function DegreeModal({
           if (!res.ok) return;
           const data = await res.json();
 
-          if (data.type === "template" && data.template) {
-            setSearchQuery(data.template.name);
-            setPlanName(data.template.name);
-            setOriginalDegreeId(data.template.id);
-            setOriginalType("template");
-            setSelectedDegree({
-              id: data.template.id,
-              name: data.template.name,
-              requirements: data.template.requirements || [],
-            });
-            const allIds = new Set<number>(
-              (data.template.requirements || []).map((r: RequirementNode) => r.id)
-            );
-            setEnabledRequirements(allIds);
-          } else if (data.type === "plan" && data.plan) {
+          if (data.type === "plan" && data.plan) {
             const templateId = data.plan.templateId ?? data.plan.id;
             setSearchQuery(data.plan.template?.name || data.plan.name);
             setPlanName(data.plan.name);
             setOriginalDegreeId(templateId);
-            setOriginalType("plan");
             setSelectedDegree({
               id: templateId,
               name: data.plan.name,
@@ -247,7 +231,6 @@ export default function DegreeModal({
       setPlanName("");
       setIsEditingName(false);
       setOriginalDegreeId(null);
-      setOriginalType("none");
       setIsDirty(false);
       resetCustomForm();
     }
@@ -402,15 +385,16 @@ export default function DegreeModal({
     const userId = 1;
 
     const modified = hasModifications();
-    const nameChanged = planName !== selectedDegree.name;
-    const needsPlan = modified || nameChanged ||
-      (originalType === "plan" && selectedDegree.id === originalDegreeId);
 
-    if (!needsPlan) {
+    if (!modified) {
+      // No modifications — POST with just templateId, server copies all requirements
       await fetch(`/api/users/${userId}/degree`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateId: selectedDegree.id }),
+        body: JSON.stringify({
+          templateId: selectedDegree.id,
+          name: planName || selectedDegree.name,
+        }),
       });
     } else {
       const requirements: any[] = [];

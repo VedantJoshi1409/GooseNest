@@ -11,71 +11,11 @@ async function parseParams(params: Params["params"]) {
   return { userId, requirementId };
 }
 
-// Recursive type for requirement trees
-interface ReqTreeNode {
-  id: number;
-  name: string;
-  amount: number;
-  isText: boolean;
-  courseGroupId: number | null;
-  courseGroup: { id: number; name: string; links: { courseCode: string }[] } | null;
-  children: ReqTreeNode[];
-}
-
-/**
- * Recursively copy template requirements into PlanRequirements.
- * Returns a map from template requirement ID → plan requirement ID.
- */
-async function copyReqTree(
-  planId: number,
-  reqs: ReqTreeNode[],
-  parentId: number | null,
-  reqIdMap: Map<number, number>,
-) {
-  for (const req of reqs) {
-    let newGroupId = req.courseGroupId;
-
-    if (req.courseGroup && req.courseGroupId) {
-      const copiedGroup = await prisma.courseGroup.create({
-        data: {
-          name: req.courseGroup.name,
-          links: {
-            createMany: {
-              data: req.courseGroup.links.map((l) => ({
-                courseCode: l.courseCode,
-              })),
-            },
-          },
-        },
-      });
-      newGroupId = copiedGroup.id;
-    }
-
-    const planReq = await prisma.planRequirement.create({
-      data: {
-        name: req.name,
-        amount: req.amount,
-        isText: req.isText,
-        courseGroupId: newGroupId,
-        planId,
-        parentId,
-      },
-    });
-
-    reqIdMap.set(req.id, planReq.id);
-
-    if (req.children && req.children.length > 0) {
-      await copyReqTree(planId, req.children, planReq.id, reqIdMap);
-    }
-  }
-}
-
 /**
  * PATCH /api/users/[id]/degree/requirements/[reqId]
  * Body: { forceCompleted: boolean }
  *
- * Toggles force-complete on a requirement. If user is on a template,
- * first copies the tree into a plan.
+ * Toggles force-complete on a plan requirement.
  */
 export async function PATCH(request: NextRequest, { params }: Params) {
   const parsed = await parseParams(params);
@@ -103,88 +43,17 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  // If user is on a template, load the full tree and copy into a plan
-  if (!user.plan && user.templateId) {
-    function reqInclude(depth: number): any {
-      const base: any = {
-        orderBy: { id: "asc" as const },
-        include: {
-          courseGroup: { include: { links: true } },
-        },
-      };
-      if (depth > 0) {
-        base.include.children = reqInclude(depth - 1);
-      } else {
-        base.include.children = { orderBy: { id: "asc" as const } };
-      }
-      return base;
-    }
-
-    const template = await prisma.template.findUnique({
-      where: { id: user.templateId! },
-      include: {
-        requirements: {
-          where: { parentId: null },
-          ...reqInclude(4),
-        },
-      },
-    });
-
-    if (!template) {
-      return NextResponse.json({ error: "Template not found" }, { status: 404 });
-    }
-
-    const reqIdMap = new Map<number, number>();
-
-    const plan = await prisma.plan.create({
-      data: {
-        name: `${template.name} (Custom)`,
-        userId,
-        templateId: template.id,
-      },
-    });
-
-    await copyReqTree(
-      plan.id,
-      template.requirements as unknown as ReqTreeNode[],
-      null,
-      reqIdMap,
+  if (!user.plan) {
+    return NextResponse.json(
+      { error: "No degree selected" },
+      { status: 400 },
     );
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: { templateId: null },
-    });
-
-    // Find the corresponding plan requirement
-    const planReqId = reqIdMap.get(requirementId);
-    if (!planReqId) {
-      return NextResponse.json(
-        { error: "Requirement not found in copied plan" },
-        { status: 404 },
-      );
-    }
-
-    const updated = await prisma.planRequirement.update({
-      where: { id: planReqId },
-      data: { forceCompleted },
-    });
-
-    return NextResponse.json({ planRequirement: updated, planId: plan.id });
   }
 
-  // User already has a plan — update directly
-  if (user.plan) {
-    const updated = await prisma.planRequirement.update({
-      where: { id: requirementId, planId: user.plan.id },
-      data: { forceCompleted },
-    });
+  const updated = await prisma.planRequirement.update({
+    where: { id: requirementId, planId: user.plan.id },
+    data: { forceCompleted },
+  });
 
-    return NextResponse.json({ planRequirement: updated, planId: user.plan.id });
-  }
-
-  return NextResponse.json(
-    { error: "No degree selected" },
-    { status: 400 },
-  );
+  return NextResponse.json({ planRequirement: updated, planId: user.plan.id });
 }

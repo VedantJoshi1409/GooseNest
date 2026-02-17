@@ -62,6 +62,7 @@ export default function CourseGraph() {
   const ref = useRef<HTMLDivElement>(null);
   const graphRef = useRef<ForceGraph3DInstance | null>(null);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+  const [showUnlocks, setShowUnlocks] = useState(false);
 
   // TODO: replace with actual user ID from auth
   const userId = 1;
@@ -108,7 +109,7 @@ export default function CourseGraph() {
 
     // Fetch course nodes with prerequisite data
     const res = await fetch(
-      `/api/graph?courses=${courseCodes.join(",")}&includeUnlocked=false`,
+      `/api/graph?courses=${courseCodes.join(",")}&includeUnlocked=${showUnlocks}`,
     );
     const rawData: GraphData = await res.json();
     const courseNodeIds = new Set(rawData.nodes.map((n) => n.id));
@@ -255,7 +256,7 @@ export default function CourseGraph() {
         }
       });
     }
-  }, []);
+  }, [showUnlocks]);
 
   // Load on mount + listen for schedule changes from other tabs/pages
   useEffect(() => {
@@ -287,6 +288,17 @@ export default function CourseGraph() {
 
   return (
     <div className="relative w-full h-full">
+      <button
+        onClick={() => setShowUnlocks((prev) => !prev)}
+        className={`absolute top-3 right-3 z-10 px-3 py-1.5 text-xs font-semibold rounded border transition-colors ${
+          showUnlocks
+            ? "bg-[var(--goose-ink)] text-[var(--goose-cream)] border-[var(--goose-ink)]"
+            : "bg-[var(--goose-cream)] text-[var(--goose-ink)] border-[var(--goose-ink)]"
+        }`}
+      >
+        {showUnlocks ? "Hide Unlocks" : "Show Unlocks"}
+      </button>
+
       {selectedNode && (
         <NodeInfoBox
           node={selectedNode}

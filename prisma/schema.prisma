@@ -21,9 +21,6 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  templateId Int?
-  template   Template? @relation(fields: [templateId], references: [id])
-
   plan         Plan?
   schedule     TermCourse[]
 }
@@ -98,7 +95,6 @@ model Template {
 
   requirements Requirement[]
   plans        Plan[]
-  users        User[]
 }
 
 model Requirement {

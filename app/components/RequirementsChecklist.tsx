@@ -22,8 +22,7 @@ interface RequirementNode {
 }
 
 interface DegreeData {
-  type: "template" | "plan" | "none";
-  template?: { name: string; requirements: RequirementNode[] };
+  type: "plan" | "none";
   plan?: {
     id: number;
     name: string;
@@ -109,6 +108,7 @@ export default function RequirementsChecklist() {
 
   // Add-course panel state
   const [addingToReq, setAddingToReq] = useState<number | null>(null);
+  const [schedulingCourse, setSchedulingCourse] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -136,6 +136,7 @@ export default function RequirementsChecklist() {
 
   const closePanel = () => {
     setAddingToReq(null);
+    setSchedulingCourse(null);
     setSearchQuery("");
     setSearchResults([]);
     setSelectedCourse(null);
@@ -251,6 +252,22 @@ export default function RequirementsChecklist() {
       closePanel();
     } catch (error) {
       console.error("Error adding course to text requirement:", error);
+    }
+  };
+
+  const handleQuickSchedule = async (courseCode: string, term: string) => {
+    try {
+      const res = await fetch(`/api/users/${USER_ID}/schedule`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseCode, term }),
+      });
+      if (!res.ok) return;
+      setPlannedCourses((prev) => new Set(prev).add(courseCode));
+      channelRef.current?.postMessage("changed");
+      setSchedulingCourse(null);
+    } catch (error) {
+      console.error("Error scheduling course:", error);
     }
   };
 
@@ -370,20 +387,9 @@ export default function RequirementsChecklist() {
     );
   }
 
-  const requirements =
-    degreeData.type === "plan"
-      ? degreeData.plan?.requirements
-      : degreeData.template?.requirements;
-
-  const degreeName =
-    degreeData.type === "plan"
-      ? degreeData.plan?.name
-      : degreeData.template?.name;
-
-  const templateName =
-    degreeData.type === "plan"
-      ? degreeData.plan?.template?.name
-      : null;
+  const requirements = degreeData.plan?.requirements;
+  const degreeName = degreeData.plan?.name;
+  const templateName = degreeData.plan?.template?.name;
 
   if (!requirements || requirements.length === 0) {
     return (
@@ -435,6 +441,82 @@ export default function RequirementsChecklist() {
     const eligible = req.courseGroup?.links || [];
     const completedLinks = eligible.filter((l) => completedCourses.has(l.courseCode));
     const plannedLinks = eligible.filter((l) => plannedCourses.has(l.courseCode));
+
+    function CourseRow({ link, groupId }: { link: CourseLink; groupId: number }) {
+      const isCompleted = completedCourses.has(link.courseCode);
+      const isPlanned = plannedCourses.has(link.courseCode);
+      const isMissing = missingPrereqs.has(link.courseCode);
+      const isScheduled = isCompleted || isPlanned;
+      const isPickingTerm = schedulingCourse === link.courseCode;
+
+      return (
+        <div key={link.courseCode}>
+          <div
+            className={`text-xs flex items-center gap-1.5 group ${
+              isMissing
+                ? "text-red-500"
+                : isCompleted
+                  ? "text-[var(--goose-slate)]"
+                  : isPlanned
+                    ? "text-blue-600"
+                    : "text-[var(--goose-ink)]"
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                isMissing
+                  ? "bg-red-500"
+                  : isCompleted
+                    ? "bg-[var(--goose-ink)]"
+                    : isPlanned
+                      ? "bg-blue-500"
+                      : "bg-[var(--goose-mist)]"
+              }`}
+            />
+            <span className={`flex-1 ${isCompleted && !isMissing ? "line-through" : ""}`}>
+              {link.courseCode}
+              {isMissing && " (prereqs missing)"}
+              {!isMissing && isPlanned && " (planned)"}
+            </span>
+            {!isScheduled && (
+              <button
+                onClick={() => setSchedulingCourse(isPickingTerm ? null : link.courseCode)}
+                className="opacity-0 group-hover:opacity-100 text-[var(--goose-slate)] hover:text-[var(--goose-ink)] transition-all shrink-0"
+                aria-label={`Schedule ${link.courseCode}`}
+                title="Add to term"
+              >
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <path d="M6 2v8M2 6h8" />
+                </svg>
+              </button>
+            )}
+            <button
+              onClick={() => handleRemoveFromGroup(groupId, link.courseCode)}
+              className="opacity-0 group-hover:opacity-100 text-[var(--goose-slate)] hover:text-red-500 transition-all shrink-0"
+              aria-label={`Remove ${link.courseCode} from ${req.name}`}
+              title="Remove from requirement"
+            >
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <path d="M3 3l6 6M9 3l-6 6" />
+              </svg>
+            </button>
+          </div>
+          {isPickingTerm && (
+            <div className="ml-3 mt-0.5 mb-1 flex flex-wrap gap-1">
+              {TERMS.filter((t) => TERMS.indexOf(t) >= TERMS.indexOf(currentTerm)).map((term) => (
+                <button
+                  key={term}
+                  onClick={() => handleQuickSchedule(link.courseCode, term)}
+                  className="text-[10px] px-1.5 py-0.5 border border-[var(--goose-mist)] rounded hover:border-[var(--goose-ink)] hover:bg-[var(--goose-mist)]/30 transition-colors"
+                >
+                  {term}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
 
     // Naturally fulfilled + not forced = disabled (can't toggle)
     // Forced (with or without natural) = clickable to undo
@@ -601,52 +683,9 @@ export default function RequirementsChecklist() {
         {isText && req.courseGroup && eligible.length > 0 && (
           <div className="ml-6">
             <div className={`space-y-0.5 ${eligible.length > 5 ? "max-h-[100px] overflow-y-auto pr-1" : ""}`}>
-              {eligible.map((link) => {
-                const isCompleted = completedCourses.has(link.courseCode);
-                const isPlanned = plannedCourses.has(link.courseCode);
-                const isMissing = missingPrereqs.has(link.courseCode);
-                return (
-                  <div
-                    key={link.courseCode}
-                    className={`text-xs flex items-center gap-1.5 group ${
-                      isMissing
-                        ? "text-red-500"
-                        : isCompleted
-                          ? "text-[var(--goose-slate)]"
-                          : isPlanned
-                            ? "text-blue-600"
-                            : "text-[var(--goose-ink)]"
-                    }`}
-                  >
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                        isMissing
-                          ? "bg-red-500"
-                          : isCompleted
-                            ? "bg-[var(--goose-ink)]"
-                            : isPlanned
-                              ? "bg-blue-500"
-                              : "bg-[var(--goose-mist)]"
-                      }`}
-                    />
-                    <span className={`flex-1 ${isCompleted && !isMissing ? "line-through" : ""}`}>
-                      {link.courseCode}
-                      {isMissing && " (prereqs missing)"}
-                      {!isMissing && isPlanned && " (planned)"}
-                    </span>
-                    <button
-                      onClick={() => handleRemoveFromGroup(req.courseGroup!.id, link.courseCode)}
-                      className="opacity-0 group-hover:opacity-100 text-[var(--goose-slate)] hover:text-red-500 transition-all shrink-0"
-                      aria-label={`Remove ${link.courseCode} from ${req.name}`}
-                      title="Remove from requirement"
-                    >
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                        <path d="M3 3l6 6M9 3l-6 6" />
-                      </svg>
-                    </button>
-                  </div>
-                );
-              })}
+              {eligible.map((link) => (
+                <CourseRow key={link.courseCode} link={link} groupId={req.courseGroup!.id} />
+              ))}
             </div>
           </div>
         )}
@@ -661,52 +700,9 @@ export default function RequirementsChecklist() {
               )}
             </p>
             <div className={`space-y-0.5 ${eligible.length > 5 ? "max-h-[100px] overflow-y-auto pr-1" : ""}`}>
-              {eligible.map((link) => {
-                const isCompleted = completedCourses.has(link.courseCode);
-                const isPlanned = plannedCourses.has(link.courseCode);
-                const isMissing = missingPrereqs.has(link.courseCode);
-                return (
-                  <div
-                    key={link.courseCode}
-                    className={`text-xs flex items-center gap-1.5 group ${
-                      isMissing
-                        ? "text-red-500"
-                        : isCompleted
-                          ? "text-[var(--goose-slate)]"
-                          : isPlanned
-                            ? "text-blue-600"
-                            : "text-[var(--goose-ink)]"
-                    }`}
-                  >
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                        isMissing
-                          ? "bg-red-500"
-                          : isCompleted
-                            ? "bg-[var(--goose-ink)]"
-                            : isPlanned
-                              ? "bg-blue-500"
-                              : "bg-[var(--goose-mist)]"
-                      }`}
-                    />
-                    <span className={`flex-1 ${isCompleted && !isMissing ? "line-through" : ""}`}>
-                      {link.courseCode}
-                      {isMissing && " (prereqs missing)"}
-                      {!isMissing && isPlanned && " (planned)"}
-                    </span>
-                    <button
-                      onClick={() => handleRemoveFromGroup(req.courseGroup!.id, link.courseCode)}
-                      className="opacity-0 group-hover:opacity-100 text-[var(--goose-slate)] hover:text-red-500 transition-all shrink-0"
-                      aria-label={`Remove ${link.courseCode} from ${req.name}`}
-                      title="Remove from requirement"
-                    >
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                        <path d="M3 3l6 6M9 3l-6 6" />
-                      </svg>
-                    </button>
-                  </div>
-                );
-              })}
+              {eligible.map((link) => (
+                <CourseRow key={link.courseCode} link={link} groupId={req.courseGroup!.id} />
+              ))}
             </div>
           </div>
         )}

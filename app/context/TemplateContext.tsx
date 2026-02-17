@@ -86,12 +86,6 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
                 name: degreeData.plan.name,
                 requirements: degreeData.plan.requirements,
               };
-            } else if (degreeData.type === "template" && degreeData.template) {
-              saved = {
-                id: degreeData.template.id,
-                name: degreeData.template.name,
-                requirements: degreeData.template.requirements,
-              };
             }
 
             if (saved) {
@@ -149,12 +143,6 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
             id: degreeData.plan.templateId ?? degreeData.plan.id,
             name: degreeData.plan.name,
             requirements: degreeData.plan.requirements,
-          };
-        } else if (degreeData.type === "template" && degreeData.template) {
-          saved = {
-            id: degreeData.template.id,
-            name: degreeData.template.name,
-            requirements: degreeData.template.requirements,
           };
         }
 

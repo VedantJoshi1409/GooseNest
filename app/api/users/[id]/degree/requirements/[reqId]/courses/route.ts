@@ -11,87 +11,13 @@ async function parseParams(params: Params["params"]) {
   return { userId, requirementId };
 }
 
-// Recursive type for requirement trees
-interface ReqTreeNode {
-  id: number;
-  name: string;
-  amount: number;
-  isText: boolean;
-  courseGroupId: number | null;
-  courseGroup: { id: number; name: string; links: { courseCode: string }[] } | null;
-  children: ReqTreeNode[];
-}
-
-/**
- * Recursively copy template requirements into PlanRequirements.
- * Returns a map from template requirement ID → plan requirement ID.
- */
-async function copyReqTree(
-  planId: number,
-  reqs: ReqTreeNode[],
-  parentId: number | null,
-  reqIdMap: Map<number, number>,
-) {
-  for (const req of reqs) {
-    let newGroupId = req.courseGroupId;
-
-    if (req.courseGroup && req.courseGroupId) {
-      const copiedGroup = await prisma.courseGroup.create({
-        data: {
-          name: req.courseGroup.name,
-          links: {
-            createMany: {
-              data: req.courseGroup.links.map((l) => ({
-                courseCode: l.courseCode,
-              })),
-            },
-          },
-        },
-      });
-      newGroupId = copiedGroup.id;
-    }
-
-    const planReq = await prisma.planRequirement.create({
-      data: {
-        name: req.name,
-        amount: req.amount,
-        isText: req.isText,
-        courseGroupId: newGroupId,
-        planId,
-        parentId,
-      },
-    });
-
-    reqIdMap.set(req.id, planReq.id);
-
-    if (req.children && req.children.length > 0) {
-      await copyReqTree(planId, req.children, planReq.id, reqIdMap);
-    }
-  }
-}
-
-function reqInclude(depth: number): any {
-  const base: any = {
-    orderBy: { id: "asc" as const },
-    include: {
-      courseGroup: { include: { links: true } },
-    },
-  };
-  if (depth > 0) {
-    base.include.children = reqInclude(depth - 1);
-  } else {
-    base.include.children = { orderBy: { id: "asc" as const } };
-  }
-  return base;
-}
-
 /**
  * POST /api/users/[id]/degree/requirements/[reqId]/courses
  * Body: { courseCode: string, term?: string }
  *
- * Adds a course to a requirement. If the requirement has no courseGroup,
- * creates one first. If the user is on a template, copies into a plan first.
- * If term is provided, also schedules the course in that term.
+ * Adds a course to a requirement's courseGroup. Creates a courseGroup if
+ * the requirement doesn't have one. If term is provided, also schedules
+ * the course in that term.
  */
 export async function POST(request: NextRequest, { params }: Params) {
   const parsed = await parseParams(params);
@@ -125,76 +51,26 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  let planReqId: number;
-  let planId: number;
-
-  // If user is on a template, load the full tree and copy into a plan
-  if (!user.plan && user.templateId) {
-    const template = await prisma.template.findUnique({
-      where: { id: user.templateId },
-      include: {
-        requirements: {
-          where: { parentId: null },
-          ...reqInclude(4),
-        },
-      },
-    });
-
-    if (!template) {
-      return NextResponse.json({ error: "Template not found" }, { status: 404 });
-    }
-
-    const reqIdMap = new Map<number, number>();
-
-    const plan = await prisma.plan.create({
-      data: {
-        name: `${template.name} (Custom)`,
-        userId,
-        templateId: template.id,
-      },
-    });
-
-    await copyReqTree(
-      plan.id,
-      template.requirements as unknown as ReqTreeNode[],
-      null,
-      reqIdMap,
-    );
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: { templateId: null },
-    });
-
-    const mappedId = reqIdMap.get(requirementId);
-    if (!mappedId) {
-      return NextResponse.json(
-        { error: "Requirement not found in copied plan" },
-        { status: 404 },
-      );
-    }
-
-    planReqId = mappedId;
-    planId = plan.id;
-  } else if (user.plan) {
-    // Verify requirement exists in the plan with a direct query
-    const exists = await prisma.planRequirement.findFirst({
-      where: { id: requirementId, planId: user.plan.id },
-    });
-    if (!exists) {
-      return NextResponse.json(
-        { error: "Requirement not found in plan" },
-        { status: 404 },
-      );
-    }
-    planReqId = requirementId;
-    planId = user.plan.id;
-  } else {
+  if (!user.plan) {
     return NextResponse.json(
       { error: "No degree selected" },
       { status: 400 },
     );
   }
+
+  // Verify requirement exists in the plan
+  const exists = await prisma.planRequirement.findFirst({
+    where: { id: requirementId, planId: user.plan.id },
+  });
+  if (!exists) {
+    return NextResponse.json(
+      { error: "Requirement not found in plan" },
+      { status: 404 },
+    );
+  }
+
+  const planReqId = requirementId;
+  const planId = user.plan.id;
 
   // Fetch the plan requirement to check if it has a courseGroup
   const planReq = await prisma.planRequirement.findUnique({
