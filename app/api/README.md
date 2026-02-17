@@ -1,6 +1,24 @@
 # API Routes
 
-## Courses
+## Authentication
+
+Routes are split into **public** (no auth required) and **authenticated** (require a logged-in user).
+
+Anonymous users access the degree and schedule planners with data stored in `sessionStorage` instead of the database. The middleware (`lib/supabase/middleware.ts`) allows unauthenticated access to `/degree-planner`, `/schedule-planner`, and all `/api/*` routes.
+
+---
+
+## Public Routes
+
+These are read-only endpoints that work for both authenticated and anonymous users.
+
+### Auth
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/auth/me` | Get the current authenticated user (returns 401 if not logged in) |
+
+### Courses
 
 | Method | Route | Description |
 |--------|-------|-------------|
@@ -20,13 +38,13 @@
 }
 ```
 
-## Course Search
+### Course Search
 
 | Method | Route | Description |
 |--------|-------|-------------|
 | GET | `/api/courses/search?q=cs1` | Search courses by code or title (case-insensitive, max 20 results) |
 
-## Faculties
+### Faculties
 
 | Method | Route | Description |
 |--------|-------|-------------|
@@ -42,7 +60,7 @@
 }
 ```
 
-## Templates (Degrees)
+### Templates (Degrees)
 
 | Method | Route | Description |
 |--------|-------|-------------|
@@ -59,7 +77,7 @@
 }
 ```
 
-## Requirements
+### Requirements
 
 | Method | Route | Description |
 |--------|-------|-------------|
@@ -77,7 +95,7 @@
 }
 ```
 
-## Course Groups
+### Course Groups
 
 | Method | Route | Description |
 |--------|-------|-------------|
@@ -95,14 +113,20 @@
 }
 ```
 
-## Graph
+### Graph
 
 | Method | Route | Description |
 |--------|-------|-------------|
 | GET | `/api/graph?faculties=MAT,ENG` | Get graph data filtered by faculties |
 | GET | `/api/graph?courses=CS135&includeUnlocked=true` | Get graph data for specific courses |
 
-## User Schedule
+---
+
+## Authenticated Routes
+
+These require a logged-in user. Anonymous users bypass these entirely — their data is stored in `sessionStorage` via `lib/session-store.ts`.
+
+### User Schedule
 
 | Method | Route | Description |
 |--------|-------|-------------|
@@ -142,7 +166,7 @@
 }
 ```
 
-## User Degree
+### User Degree
 
 | Method | Route | Description |
 |--------|-------|-------------|
@@ -171,7 +195,7 @@
 }
 ```
 
-## User Degree Courses
+### User Degree Courses
 
 | Method | Route | Description |
 |--------|-------|-------------|
@@ -183,5 +207,27 @@
 {
   "courseGroupId": 1,
   "courseCode": "CS245"
+}
+```
+
+### User Degree Requirements
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| PATCH | `/api/users/[id]/degree/requirements/[reqId]` | Toggle force-complete on a plan requirement |
+| POST | `/api/users/[id]/degree/requirements/[reqId]/courses` | Add a course to a requirement's group (creates group if needed), optionally schedule it |
+
+**PATCH body:**
+```json
+{
+  "forceCompleted": true
+}
+```
+
+**POST body:**
+```json
+{
+  "courseCode": "CS245",
+  "term": "2A"
 }
 ```
