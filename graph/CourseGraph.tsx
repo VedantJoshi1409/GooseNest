@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { GraphData, GraphLink, GraphNode } from "./types";
 import NodeInfoBox from "./NodeInfoBox";
 import { useAuth } from "@/app/context/AuthContext";
+import { getAnonSchedule } from "@/lib/session-store";
 
 const FACULTY_COLORS: Record<string, string> = {
   MAT: "#df1aa0",
@@ -73,14 +74,25 @@ export default function CourseGraph() {
   const facultyIdsRef = useRef<Set<string>>(new Set());
 
   const loadData = useCallback(async () => {
-    if (!userId) return;
-    const scheduleRes = await fetch(`/api/users/${userId}/schedule`);
-    if (!scheduleRes.ok) return;
-
-    const scheduleData: {
+    let scheduleData: {
       currentTerm: string;
       entries: { courseCode: string; term: string }[];
-    } = await scheduleRes.json();
+    };
+
+    if (userId) {
+      const scheduleRes = await fetch(`/api/users/${userId}/schedule`);
+      if (!scheduleRes.ok) return;
+      scheduleData = await scheduleRes.json();
+    } else {
+      const anonSchedule = getAnonSchedule();
+      scheduleData = {
+        currentTerm: anonSchedule.currentTerm,
+        entries: anonSchedule.entries.map((e) => ({
+          courseCode: e.courseCode,
+          term: e.term,
+        })),
+      };
+    }
 
     const courseCodes = scheduleData.entries.map((e) => e.courseCode);
 

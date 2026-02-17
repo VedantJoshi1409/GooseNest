@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Navbar from "../components/Navbar";
 import CourseCard from "../components/CourseCard";
 import { useAuth } from "../context/AuthContext";
+import { getAnonSchedule, setAnonSchedule } from "@/lib/session-store";
 
 interface Course {
   code: string;
@@ -77,11 +78,18 @@ export default function SchedulePlannerPage() {
 
   // Fetch schedule on mount
   useEffect(() => {
-    if (!user) return;
+    if (authLoading) return;
+
     async function fetchSchedule() {
-      const res = await fetch(`/api/users/${user!.id}/schedule`);
-      if (!res.ok) return;
-      const data: { currentTerm: string; entries: TermCourseEntry[] } = await res.json();
+      let data: { currentTerm: string; entries: TermCourseEntry[] };
+
+      if (user) {
+        const res = await fetch(`/api/users/${user.id}/schedule`);
+        if (!res.ok) return;
+        data = await res.json();
+      } else {
+        data = getAnonSchedule();
+      }
 
       setCurrentTerm(data.currentTerm);
 
@@ -101,7 +109,7 @@ export default function SchedulePlannerPage() {
       setCourses(grouped);
     }
     fetchSchedule();
-  }, [user]);
+  }, [user, authLoading]);
 
   // Debounced search with sessionStorage caching
   const handleSearchChange = useCallback((value: string) => {
@@ -158,32 +166,68 @@ export default function SchedulePlannerPage() {
     );
     if (alreadyScheduled) return;
 
-    const res = await fetch(`/api/users/${user!.id}/schedule`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ courseCode: course.code, term: selectedTerm }),
-    });
-    if (!res.ok) return;
+    if (user) {
+      const res = await fetch(`/api/users/${user.id}/schedule`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseCode: course.code, term: selectedTerm }),
+      });
+      if (!res.ok) return;
 
-    const entry = await res.json();
-    const prereqs = (entry.course?.prereqs || []).map((p: { prereqCode: string }) => p.prereqCode);
+      const entry = await res.json();
+      const prereqs = (entry.course?.prereqs || []).map((p: { prereqCode: string }) => p.prereqCode);
 
-    setCourses((prev) => ({
-      ...prev,
-      [selectedTerm]: [...prev[selectedTerm], { ...course, prereqs }],
-    }));
+      setCourses((prev) => ({
+        ...prev,
+        [selectedTerm]: [...prev[selectedTerm], { ...course, prereqs }],
+      }));
+    } else {
+      // Fetch course details for prereqs
+      const searchRes = await fetch(`/api/courses/search?q=${encodeURIComponent(course.code)}`);
+      let prereqs: string[] = [];
+      if (searchRes.ok) {
+        const results: { code: string; title: string; prereqs?: { prereqCode: string }[] }[] = await searchRes.json();
+        const match = results.find((r) => r.code === course.code);
+        prereqs = (match?.prereqs || []).map((p) => p.prereqCode);
+      }
+
+      const schedule = getAnonSchedule();
+      schedule.entries.push({
+        courseCode: course.code,
+        term: selectedTerm,
+        course: {
+          code: course.code,
+          title: course.name,
+          prereqs: prereqs.map((p) => ({ prereqCode: p })),
+        },
+      });
+      setAnonSchedule(schedule);
+
+      setCourses((prev) => ({
+        ...prev,
+        [selectedTerm]: [...prev[selectedTerm], { ...course, prereqs }],
+      }));
+    }
+
     setSearchQuery("");
     setSearchResults([]);
     notifyChange();
   };
 
   const handleMoveCourse = async (courseCode: string, targetTerm: string) => {
-    const res = await fetch(`/api/users/${user!.id}/schedule`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ courseCode, term: targetTerm }),
-    });
-    if (!res.ok) return;
+    if (user) {
+      const res = await fetch(`/api/users/${user.id}/schedule`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseCode, term: targetTerm }),
+      });
+      if (!res.ok) return;
+    } else {
+      const schedule = getAnonSchedule();
+      const entry = schedule.entries.find((e) => e.courseCode === courseCode);
+      if (entry) entry.term = targetTerm;
+      setAnonSchedule(schedule);
+    }
 
     setCourses((prev) => {
       const course = prev[selectedTerm].find((c) => c.code === courseCode);
@@ -199,23 +243,35 @@ export default function SchedulePlannerPage() {
   };
 
   const handleSetCurrentTerm = async (term: string) => {
-    const res = await fetch(`/api/users/${user!.id}/schedule`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ currentTerm: term }),
-    });
-    if (!res.ok) return;
+    if (user) {
+      const res = await fetch(`/api/users/${user.id}/schedule`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentTerm: term }),
+      });
+      if (!res.ok) return;
+    } else {
+      const schedule = getAnonSchedule();
+      schedule.currentTerm = term;
+      setAnonSchedule(schedule);
+    }
     setCurrentTerm(term);
     notifyChange();
   };
 
   const handleRemoveCourse = async (courseCode: string) => {
-    const res = await fetch(`/api/users/${user!.id}/schedule`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ courseCode }),
-    });
-    if (!res.ok) return;
+    if (user) {
+      const res = await fetch(`/api/users/${user.id}/schedule`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseCode }),
+      });
+      if (!res.ok) return;
+    } else {
+      const schedule = getAnonSchedule();
+      schedule.entries = schedule.entries.filter((e) => e.courseCode !== courseCode);
+      setAnonSchedule(schedule);
+    }
 
     setCourses((prev) => ({
       ...prev,

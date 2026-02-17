@@ -2,6 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import {
+  getAnonSchedule,
+  setAnonSchedule,
+  getAnonDegree,
+  setAnonDegree,
+  nextAnonId,
+} from "@/lib/session-store";
 
 interface CourseLink {
   courseCode: string;
@@ -14,6 +21,7 @@ interface RequirementNode {
   amount: number;
   isText: boolean;
   forceCompleted?: boolean;
+  courseGroupId?: number | null;
   courseGroup: {
     id: number;
     name: string;
@@ -38,6 +46,98 @@ interface SearchResult {
 }
 
 const TERMS = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
+
+// ---------------------------------------------------------------------------
+// Tree mutation helpers for anonymous sessionStorage data
+// ---------------------------------------------------------------------------
+
+function addCourseToGroupInTree(
+  reqs: RequirementNode[],
+  courseGroupId: number,
+  courseCode: string,
+): boolean {
+  for (const req of reqs) {
+    if (req.courseGroup && req.courseGroup.id === courseGroupId) {
+      if (!req.courseGroup.links.some((l) => l.courseCode === courseCode)) {
+        req.courseGroup.links.push({
+          courseCode,
+          course: { code: courseCode, title: "" },
+        });
+      }
+      return true;
+    }
+    if (req.children && addCourseToGroupInTree(req.children, courseGroupId, courseCode)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function addCourseToReqInTree(
+  reqs: RequirementNode[],
+  reqId: number,
+  courseCode: string,
+): boolean {
+  for (const req of reqs) {
+    if (req.id === reqId) {
+      if (!req.courseGroup) {
+        req.courseGroup = {
+          id: nextAnonId(),
+          name: req.name,
+          links: [],
+        };
+        req.courseGroupId = req.courseGroup.id;
+      }
+      if (!req.courseGroup.links.some((l) => l.courseCode === courseCode)) {
+        req.courseGroup.links.push({
+          courseCode,
+          course: { code: courseCode, title: "" },
+        });
+      }
+      return true;
+    }
+    if (req.children && addCourseToReqInTree(req.children, reqId, courseCode)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function removeCourseFromGroupInTree(
+  reqs: RequirementNode[],
+  courseGroupId: number,
+  courseCode: string,
+): boolean {
+  for (const req of reqs) {
+    if (req.courseGroup && req.courseGroup.id === courseGroupId) {
+      req.courseGroup.links = req.courseGroup.links.filter(
+        (l) => l.courseCode !== courseCode,
+      );
+      return true;
+    }
+    if (req.children && removeCourseFromGroupInTree(req.children, courseGroupId, courseCode)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function toggleForceCompletedInTree(
+  reqs: RequirementNode[],
+  reqId: number,
+  value: boolean,
+): boolean {
+  for (const req of reqs) {
+    if (req.id === reqId) {
+      req.forceCompleted = value;
+      return true;
+    }
+    if (req.children && toggleForceCompletedInTree(req.children, reqId, value)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 /**
  * Check if a node is naturally fulfilled (by courses alone, ignoring forceCompleted).
@@ -168,8 +268,12 @@ export default function RequirementsChecklist() {
   }, []);
 
   const refreshDegreeData = async () => {
-    const res = await fetch(`/api/users/${user!.id}/degree`);
-    if (res.ok) setDegreeData(await res.json());
+    if (user) {
+      const res = await fetch(`/api/users/${user.id}/degree`);
+      if (res.ok) setDegreeData(await res.json());
+    } else {
+      setDegreeData(getAnonDegree() as DegreeData);
+    }
   };
 
   const handleSelectCourse = (course: SearchResult, courseGroupId: number | null, reqId?: number) => {
@@ -188,12 +292,20 @@ export default function RequirementsChecklist() {
 
   const handleAddToGroupOnly = async (courseGroupId: number, courseCode: string) => {
     try {
-      const res = await fetch(`/api/users/${user!.id}/degree/courses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseGroupId, courseCode }),
-      });
-      if (!res.ok) return;
+      if (user) {
+        const res = await fetch(`/api/users/${user.id}/degree/courses`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ courseGroupId, courseCode }),
+        });
+        if (!res.ok) return;
+      } else {
+        const degree = getAnonDegree();
+        if (degree.plan) {
+          addCourseToGroupInTree(degree.plan.requirements, courseGroupId, courseCode);
+          setAnonDegree(degree);
+        }
+      }
       await refreshDegreeData();
       closePanel();
     } catch (error) {
@@ -207,20 +319,38 @@ export default function RequirementsChecklist() {
     term: string,
   ) => {
     try {
-      const [groupRes, scheduleRes] = await Promise.all([
-        fetch(`/api/users/${user!.id}/degree/courses`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ courseGroupId, courseCode }),
-        }),
-        fetch(`/api/users/${user!.id}/schedule`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ courseCode, term }),
-        }),
-      ]);
-
-      if (!groupRes.ok || !scheduleRes.ok) return;
+      if (user) {
+        const [groupRes, scheduleRes] = await Promise.all([
+          fetch(`/api/users/${user.id}/degree/courses`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ courseGroupId, courseCode }),
+          }),
+          fetch(`/api/users/${user.id}/schedule`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ courseCode, term }),
+          }),
+        ]);
+        if (!groupRes.ok || !scheduleRes.ok) return;
+      } else {
+        // Add to degree group
+        const degree = getAnonDegree();
+        if (degree.plan) {
+          addCourseToGroupInTree(degree.plan.requirements, courseGroupId, courseCode);
+          setAnonDegree(degree);
+        }
+        // Add to schedule
+        const schedule = getAnonSchedule();
+        if (!schedule.entries.some((e) => e.courseCode === courseCode)) {
+          schedule.entries.push({
+            courseCode,
+            term,
+            course: { code: courseCode, title: "", prereqs: [] },
+          });
+          setAnonSchedule(schedule);
+        }
+      }
 
       await refreshDegreeData();
       setPlannedCourses((prev) => new Set(prev).add(courseCode));
@@ -237,12 +367,33 @@ export default function RequirementsChecklist() {
     term?: string,
   ) => {
     try {
-      const res = await fetch(`/api/users/${user!.id}/degree/requirements/${reqId}/courses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseCode, term }),
-      });
-      if (!res.ok) return;
+      if (user) {
+        const res = await fetch(`/api/users/${user.id}/degree/requirements/${reqId}/courses`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ courseCode, term }),
+        });
+        if (!res.ok) return;
+      } else {
+        // Add to text req's courseGroup in sessionStorage
+        const degree = getAnonDegree();
+        if (degree.plan) {
+          addCourseToReqInTree(degree.plan.requirements, reqId, courseCode);
+          setAnonDegree(degree);
+        }
+        // Add to schedule if term provided
+        if (term) {
+          const schedule = getAnonSchedule();
+          if (!schedule.entries.some((e) => e.courseCode === courseCode)) {
+            schedule.entries.push({
+              courseCode,
+              term,
+              course: { code: courseCode, title: "", prereqs: [] },
+            });
+            setAnonSchedule(schedule);
+          }
+        }
+      }
       await refreshDegreeData();
       if (term) {
         setPlannedCourses((prev) => new Set(prev).add(courseCode));
@@ -256,12 +407,24 @@ export default function RequirementsChecklist() {
 
   const handleQuickSchedule = async (courseCode: string, term: string) => {
     try {
-      const res = await fetch(`/api/users/${user!.id}/schedule`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseCode, term }),
-      });
-      if (!res.ok) return;
+      if (user) {
+        const res = await fetch(`/api/users/${user.id}/schedule`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ courseCode, term }),
+        });
+        if (!res.ok) return;
+      } else {
+        const schedule = getAnonSchedule();
+        if (!schedule.entries.some((e) => e.courseCode === courseCode)) {
+          schedule.entries.push({
+            courseCode,
+            term,
+            course: { code: courseCode, title: "", prereqs: [] },
+          });
+          setAnonSchedule(schedule);
+        }
+      }
       setPlannedCourses((prev) => new Set(prev).add(courseCode));
       channelRef.current?.postMessage("changed");
       setSchedulingCourse(null);
@@ -272,12 +435,20 @@ export default function RequirementsChecklist() {
 
   const handleRemoveFromGroup = async (courseGroupId: number, courseCode: string) => {
     try {
-      const res = await fetch(`/api/users/${user!.id}/degree/courses`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseGroupId, courseCode }),
-      });
-      if (!res.ok) return;
+      if (user) {
+        const res = await fetch(`/api/users/${user.id}/degree/courses`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ courseGroupId, courseCode }),
+        });
+        if (!res.ok) return;
+      } else {
+        const degree = getAnonDegree();
+        if (degree.plan) {
+          removeCourseFromGroupInTree(degree.plan.requirements, courseGroupId, courseCode);
+          setAnonDegree(degree);
+        }
+      }
       await refreshDegreeData();
     } catch (error) {
       console.error("Error removing course from group:", error);
@@ -286,12 +457,20 @@ export default function RequirementsChecklist() {
 
   const handleForceComplete = async (reqId: number, currentlyForced: boolean) => {
     try {
-      const res = await fetch(`/api/users/${user!.id}/degree/requirements/${reqId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ forceCompleted: !currentlyForced }),
-      });
-      if (!res.ok) return;
+      if (user) {
+        const res = await fetch(`/api/users/${user.id}/degree/requirements/${reqId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ forceCompleted: !currentlyForced }),
+        });
+        if (!res.ok) return;
+      } else {
+        const degree = getAnonDegree();
+        if (degree.plan) {
+          toggleForceCompletedInTree(degree.plan.requirements, reqId, !currentlyForced);
+          setAnonDegree(degree);
+        }
+      }
       await refreshDegreeData();
     } catch (error) {
       console.error("Error toggling force-complete:", error);
@@ -299,34 +478,48 @@ export default function RequirementsChecklist() {
   };
 
   useEffect(() => {
-    if (!user) return;
     const fetchData = async () => {
       try {
-        const [degreeRes, scheduleRes] = await Promise.all([
-          fetch(`/api/users/${user.id}/degree`),
-          fetch(`/api/users/${user.id}/schedule`),
-        ]);
+        let degreeResult: DegreeData | null = null;
+        let scheduleData: {
+          currentTerm: string;
+          entries: {
+            courseCode: string;
+            term: string;
+            course: { prereqs: { prereqCode: string }[] };
+          }[];
+        } | null = null;
 
-        if (degreeRes.ok) {
-          setDegreeData(await degreeRes.json());
+        if (user) {
+          const [degreeRes, scheduleRes] = await Promise.all([
+            fetch(`/api/users/${user.id}/degree`),
+            fetch(`/api/users/${user.id}/schedule`),
+          ]);
+          if (degreeRes.ok) degreeResult = await degreeRes.json();
+          if (scheduleRes.ok) scheduleData = await scheduleRes.json();
+        } else {
+          const anonDegree = getAnonDegree();
+          degreeResult = anonDegree as DegreeData;
+          const anonSchedule = getAnonSchedule();
+          scheduleData = {
+            currentTerm: anonSchedule.currentTerm,
+            entries: anonSchedule.entries.map((e) => ({
+              courseCode: e.courseCode,
+              term: e.term,
+              course: { prereqs: e.course.prereqs },
+            })),
+          };
         }
 
-        if (scheduleRes.ok) {
-          const data: {
-            currentTerm: string;
-            entries: {
-              courseCode: string;
-              term: string;
-              course: { prereqs: { prereqCode: string }[] };
-            }[];
-          } = await scheduleRes.json();
+        if (degreeResult) setDegreeData(degreeResult);
 
-          setCurrentTerm(data.currentTerm);
-          const currentTermIndex = TERMS.indexOf(data.currentTerm);
+        if (scheduleData) {
+          setCurrentTerm(scheduleData.currentTerm);
+          const currentTermIndex = TERMS.indexOf(scheduleData.currentTerm);
           const completed = new Set<string>();
           const planned = new Set<string>();
 
-          for (const entry of data.entries) {
+          for (const entry of scheduleData.entries) {
             if (TERMS.indexOf(entry.term) < currentTermIndex) {
               completed.add(entry.courseCode);
             } else {
@@ -335,12 +528,12 @@ export default function RequirementsChecklist() {
           }
 
           const coursesByTerm = new Map<string, Set<string>>();
-          for (const entry of data.entries) {
+          for (const entry of scheduleData.entries) {
             if (!coursesByTerm.has(entry.term)) coursesByTerm.set(entry.term, new Set());
             coursesByTerm.get(entry.term)!.add(entry.courseCode);
           }
           const missing = new Set<string>();
-          for (const entry of data.entries) {
+          for (const entry of scheduleData.entries) {
             const prereqs = entry.course.prereqs.map((p) => p.prereqCode);
             if (prereqs.length === 0) continue;
             const termIndex = TERMS.indexOf(entry.term);

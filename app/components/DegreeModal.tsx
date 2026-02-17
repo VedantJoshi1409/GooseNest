@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useTemplate } from "../context/TemplateContext";
 import { useAuth } from "../context/AuthContext";
+import { getAnonDegree, setAnonDegree, copyReqTreeClient } from "@/lib/session-store";
 
 interface DegreeModalProps {
   isOpen: boolean;
@@ -191,13 +192,19 @@ export default function DegreeModal({
   }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen && user) {
+    if (isOpen) {
       const loadCurrentDegree = async () => {
         setLoadingRequirements(true);
         try {
-          const res = await fetch(`/api/users/${user.id}/degree`);
-          if (!res.ok) return;
-          const data = await res.json();
+          let data: any;
+
+          if (user) {
+            const res = await fetch(`/api/users/${user.id}/degree`);
+            if (!res.ok) return;
+            data = await res.json();
+          } else {
+            data = getAnonDegree();
+          }
 
           if (data.type === "plan" && data.plan) {
             const templateId = data.plan.templateId ?? data.plan.id;
@@ -382,12 +389,42 @@ export default function DegreeModal({
   const persistDegree = async () => {
     if (!selectedDegree) return;
 
-    const userId = user!.id;
+    if (!user) {
+      // Anonymous: build plan data client-side and save to sessionStorage
+      const templateRes = await fetch(`/api/templates/${selectedDegree.id}`);
+      if (!templateRes.ok) return;
+      const templateData = await templateRes.json();
 
+      const copiedRequirements = copyReqTreeClient(templateData.requirements || []);
+
+      const anonPlan = {
+        type: "plan" as const,
+        plan: {
+          id: selectedDegree.id,
+          name: planName || selectedDegree.name,
+          templateId: selectedDegree.id,
+          template: { name: templateData.name },
+          requirements: copiedRequirements,
+        },
+      };
+      setAnonDegree(anonPlan);
+
+      // Also update the selected template cache
+      sessionStorage.setItem(
+        "goose_nest_selected_template",
+        JSON.stringify({
+          id: selectedDegree.id,
+          name: planName || selectedDegree.name,
+          requirements: copiedRequirements,
+        })
+      );
+      return;
+    }
+
+    const userId = user.id;
     const modified = hasModifications();
 
     if (!modified) {
-      // No modifications — POST with just templateId, server copies all requirements
       await fetch(`/api/users/${userId}/degree`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -20,6 +20,7 @@ interface TemplateContextType {
   error: string | null;
   selectTemplate: (templateId: number) => Promise<void>;
   refreshFromDB: () => Promise<void>;
+  refreshFromSession: () => void;
   clearTemplate: () => void;
 }
 
@@ -49,18 +50,11 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
 
   // Fetch all templates and user's saved degree
   useEffect(() => {
-    if (!user) {
-      setSelectedTemplate(null);
-      sessionStorage.removeItem(SELECTED_TEMPLATE_KEY);
-      setIsLoading(false);
-      return;
-    }
-
     const fetchInitialData = async () => {
       try {
         setIsLoading(true);
 
-        // Fetch templates list if not cached
+        // Fetch templates list if not cached (read-only, works for all users)
         if (templates.length === 0) {
           const templatesRes = await fetch("/api/templates");
           if (templatesRes.ok) {
@@ -70,8 +64,8 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        // Always load user's degree from DB when user changes
         if (user) {
+          // Authenticated: load degree from DB
           const degreeRes = await fetch(`/api/users/${user.id}/degree`);
           if (degreeRes.ok) {
             const degreeData = await degreeRes.json();
@@ -90,6 +84,14 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
               sessionStorage.setItem(SELECTED_TEMPLATE_KEY, JSON.stringify(saved));
             }
           }
+        } else {
+          // Anonymous: load from sessionStorage
+          try {
+            const cached = sessionStorage.getItem(SELECTED_TEMPLATE_KEY);
+            if (cached) {
+              setSelectedTemplate(JSON.parse(cached));
+            }
+          } catch {}
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load data");
@@ -127,7 +129,10 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshFromDB = async () => {
-    if (!user) return;
+    if (!user) {
+      refreshFromSession();
+      return;
+    }
     try {
       setIsLoading(true);
       const degreeRes = await fetch(`/api/users/${user.id}/degree`);
@@ -157,6 +162,19 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshFromSession = () => {
+    try {
+      const cached = sessionStorage.getItem(SELECTED_TEMPLATE_KEY);
+      if (cached) {
+        setSelectedTemplate(JSON.parse(cached));
+      } else {
+        setSelectedTemplate(null);
+      }
+    } catch {
+      setSelectedTemplate(null);
+    }
+  };
+
   const clearTemplate = () => {
     setSelectedTemplate(null);
     sessionStorage.removeItem(SELECTED_TEMPLATE_KEY);
@@ -171,6 +189,7 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
         error,
         selectTemplate,
         refreshFromDB,
+        refreshFromSession,
         clearTemplate,
       }}
     >
