@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useAuth } from "./AuthContext";
 
 interface Template {
   id: number;
@@ -28,6 +29,7 @@ const STORAGE_KEY = "goose_nest_templates";
 const SELECTED_TEMPLATE_KEY = "goose_nest_selected_template";
 
 export function TemplateProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateWithRequirements | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,9 +75,8 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
         }
 
         // Load user's saved degree from DB if no template selected yet
-        // TODO: replace with actual user ID from auth
-        if (!selectedTemplate) {
-          const degreeRes = await fetch("/api/users/1/degree");
+        if (!selectedTemplate && user) {
+          const degreeRes = await fetch(`/api/users/${user.id}/degree`);
           if (degreeRes.ok) {
             const degreeData = await degreeRes.json();
             let saved: TemplateWithRequirements | null = null;
@@ -103,7 +104,7 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
     };
 
     fetchInitialData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectTemplate = async (templateId: number) => {
     try {
@@ -130,10 +131,10 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshFromDB = async () => {
+    if (!user) return;
     try {
       setIsLoading(true);
-      // TODO: replace with actual user ID from auth
-      const degreeRes = await fetch("/api/users/1/degree");
+      const degreeRes = await fetch(`/api/users/${user.id}/degree`);
       if (degreeRes.ok) {
         const degreeData = await degreeRes.json();
         let saved: TemplateWithRequirements | null = null;

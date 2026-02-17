@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Navbar from "../components/Navbar";
 import CourseCard from "../components/CourseCard";
+import { useAuth } from "../context/AuthContext";
 
 interface Course {
   code: string;
@@ -26,10 +27,10 @@ interface TermCourseEntry {
 }
 
 const TERMS = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
-const USER_ID = 1;
 const SEARCH_CACHE_KEY = "goose_nest_course_search";
 
 export default function SchedulePlannerPage() {
+  const { user, loading: authLoading } = useAuth();
   const [selectedTerm, setSelectedTerm] = useState<string>("1A");
   const [courses, setCourses] = useState<Record<string, Course[]>>({
     "1A": [], "1B": [], "2A": [], "2B": [],
@@ -76,8 +77,9 @@ export default function SchedulePlannerPage() {
 
   // Fetch schedule on mount
   useEffect(() => {
+    if (!user) return;
     async function fetchSchedule() {
-      const res = await fetch(`/api/users/${USER_ID}/schedule`);
+      const res = await fetch(`/api/users/${user!.id}/schedule`);
       if (!res.ok) return;
       const data: { currentTerm: string; entries: TermCourseEntry[] } = await res.json();
 
@@ -99,7 +101,7 @@ export default function SchedulePlannerPage() {
       setCourses(grouped);
     }
     fetchSchedule();
-  }, []);
+  }, [user]);
 
   // Debounced search with sessionStorage caching
   const handleSearchChange = useCallback((value: string) => {
@@ -156,7 +158,7 @@ export default function SchedulePlannerPage() {
     );
     if (alreadyScheduled) return;
 
-    const res = await fetch(`/api/users/${USER_ID}/schedule`, {
+    const res = await fetch(`/api/users/${user!.id}/schedule`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ courseCode: course.code, term: selectedTerm }),
@@ -176,7 +178,7 @@ export default function SchedulePlannerPage() {
   };
 
   const handleMoveCourse = async (courseCode: string, targetTerm: string) => {
-    const res = await fetch(`/api/users/${USER_ID}/schedule`, {
+    const res = await fetch(`/api/users/${user!.id}/schedule`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ courseCode, term: targetTerm }),
@@ -197,7 +199,7 @@ export default function SchedulePlannerPage() {
   };
 
   const handleSetCurrentTerm = async (term: string) => {
-    const res = await fetch(`/api/users/${USER_ID}/schedule`, {
+    const res = await fetch(`/api/users/${user!.id}/schedule`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ currentTerm: term }),
@@ -208,7 +210,7 @@ export default function SchedulePlannerPage() {
   };
 
   const handleRemoveCourse = async (courseCode: string) => {
-    const res = await fetch(`/api/users/${USER_ID}/schedule`, {
+    const res = await fetch(`/api/users/${user!.id}/schedule`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ courseCode }),
@@ -222,6 +224,14 @@ export default function SchedulePlannerPage() {
     setEditingCourse(null);
     notifyChange();
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-[var(--goose-slate)] italic">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">

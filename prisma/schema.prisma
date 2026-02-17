@@ -14,9 +14,10 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
+  id         Int      @id @default(autoincrement())
+  supabaseId String   @unique
+  email      String   @unique
+  name       String?
   currentTerm String   @default("1A")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

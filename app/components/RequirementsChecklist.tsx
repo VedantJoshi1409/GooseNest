@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 interface CourseLink {
   courseCode: string;
@@ -37,9 +38,6 @@ interface SearchResult {
 }
 
 const TERMS = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
-
-// TODO: replace with actual user ID from auth
-const USER_ID = 1;
 
 /**
  * Check if a node is naturally fulfilled (by courses alone, ignoring forceCompleted).
@@ -99,6 +97,7 @@ function isFulfilledWithPlanned(
 }
 
 export default function RequirementsChecklist() {
+  const { user } = useAuth();
   const [degreeData, setDegreeData] = useState<DegreeData | null>(null);
   const [completedCourses, setCompletedCourses] = useState<Set<string>>(new Set());
   const [plannedCourses, setPlannedCourses] = useState<Set<string>>(new Set());
@@ -169,7 +168,7 @@ export default function RequirementsChecklist() {
   }, []);
 
   const refreshDegreeData = async () => {
-    const res = await fetch(`/api/users/${USER_ID}/degree`);
+    const res = await fetch(`/api/users/${user!.id}/degree`);
     if (res.ok) setDegreeData(await res.json());
   };
 
@@ -189,7 +188,7 @@ export default function RequirementsChecklist() {
 
   const handleAddToGroupOnly = async (courseGroupId: number, courseCode: string) => {
     try {
-      const res = await fetch(`/api/users/${USER_ID}/degree/courses`, {
+      const res = await fetch(`/api/users/${user!.id}/degree/courses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ courseGroupId, courseCode }),
@@ -209,12 +208,12 @@ export default function RequirementsChecklist() {
   ) => {
     try {
       const [groupRes, scheduleRes] = await Promise.all([
-        fetch(`/api/users/${USER_ID}/degree/courses`, {
+        fetch(`/api/users/${user!.id}/degree/courses`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ courseGroupId, courseCode }),
         }),
-        fetch(`/api/users/${USER_ID}/schedule`, {
+        fetch(`/api/users/${user!.id}/schedule`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ courseCode, term }),
@@ -238,7 +237,7 @@ export default function RequirementsChecklist() {
     term?: string,
   ) => {
     try {
-      const res = await fetch(`/api/users/${USER_ID}/degree/requirements/${reqId}/courses`, {
+      const res = await fetch(`/api/users/${user!.id}/degree/requirements/${reqId}/courses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ courseCode, term }),
@@ -257,7 +256,7 @@ export default function RequirementsChecklist() {
 
   const handleQuickSchedule = async (courseCode: string, term: string) => {
     try {
-      const res = await fetch(`/api/users/${USER_ID}/schedule`, {
+      const res = await fetch(`/api/users/${user!.id}/schedule`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ courseCode, term }),
@@ -273,7 +272,7 @@ export default function RequirementsChecklist() {
 
   const handleRemoveFromGroup = async (courseGroupId: number, courseCode: string) => {
     try {
-      const res = await fetch(`/api/users/${USER_ID}/degree/courses`, {
+      const res = await fetch(`/api/users/${user!.id}/degree/courses`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ courseGroupId, courseCode }),
@@ -287,7 +286,7 @@ export default function RequirementsChecklist() {
 
   const handleForceComplete = async (reqId: number, currentlyForced: boolean) => {
     try {
-      const res = await fetch(`/api/users/${USER_ID}/degree/requirements/${reqId}`, {
+      const res = await fetch(`/api/users/${user!.id}/degree/requirements/${reqId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ forceCompleted: !currentlyForced }),
@@ -300,11 +299,12 @@ export default function RequirementsChecklist() {
   };
 
   useEffect(() => {
+    if (!user) return;
     const fetchData = async () => {
       try {
         const [degreeRes, scheduleRes] = await Promise.all([
-          fetch(`/api/users/${USER_ID}/degree`),
-          fetch(`/api/users/${USER_ID}/schedule`),
+          fetch(`/api/users/${user.id}/degree`),
+          fetch(`/api/users/${user.id}/schedule`),
         ]);
 
         if (degreeRes.ok) {
@@ -367,7 +367,7 @@ export default function RequirementsChecklist() {
     };
 
     fetchData();
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (

@@ -243,7 +243,7 @@ async function main() {
 
   // 7. Seed test user (no plan/template assigned)
   const user = await prisma.user.create({
-    data: { email: "test@uwaterloo.ca", name: "Test User" },
+    data: { email: "test@uwaterloo.ca", name: "Test User", supabaseId: "seed-test-user" },
   });
 
   console.log("Seeded user:", user.email);

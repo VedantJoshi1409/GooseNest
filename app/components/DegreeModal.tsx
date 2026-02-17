@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useTemplate } from "../context/TemplateContext";
+import { useAuth } from "../context/AuthContext";
 
 interface DegreeModalProps {
   isOpen: boolean;
@@ -56,6 +57,7 @@ export default function DegreeModal({
   onSelectDegree,
 }: DegreeModalProps) {
   const { templates, isLoading } = useTemplate();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedDegree, setSelectedDegree] =
@@ -189,12 +191,11 @@ export default function DegreeModal({
   }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && user) {
       const loadCurrentDegree = async () => {
         setLoadingRequirements(true);
         try {
-          // TODO: replace with actual user ID from auth
-          const res = await fetch("/api/users/1/degree");
+          const res = await fetch(`/api/users/${user.id}/degree`);
           if (!res.ok) return;
           const data = await res.json();
 
@@ -381,8 +382,7 @@ export default function DegreeModal({
   const persistDegree = async () => {
     if (!selectedDegree) return;
 
-    // TODO: replace with actual user ID from auth
-    const userId = 1;
+    const userId = user!.id;
 
     const modified = hasModifications();
 

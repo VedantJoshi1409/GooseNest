@@ -8,6 +8,7 @@ const ForceGraph3DFn = ForceGraph3D as unknown as () => (
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GraphData, GraphLink, GraphNode } from "./types";
 import NodeInfoBox from "./NodeInfoBox";
+import { useAuth } from "@/app/context/AuthContext";
 
 const FACULTY_COLORS: Record<string, string> = {
   MAT: "#df1aa0",
@@ -63,9 +64,8 @@ export default function CourseGraph() {
   const graphRef = useRef<ForceGraph3DInstance | null>(null);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [showUnlocks, setShowUnlocks] = useState(false);
-
-  // TODO: replace with actual user ID from auth
-  const userId = 1;
+  const { user } = useAuth();
+  const userId = user?.id;
 
   // Track current state for nodeColor callback
   const completedRef = useRef<Set<string>>(new Set());
@@ -73,6 +73,7 @@ export default function CourseGraph() {
   const facultyIdsRef = useRef<Set<string>>(new Set());
 
   const loadData = useCallback(async () => {
+    if (!userId) return;
     const scheduleRes = await fetch(`/api/users/${userId}/schedule`);
     if (!scheduleRes.ok) return;
 
@@ -256,7 +257,7 @@ export default function CourseGraph() {
         }
       });
     }
-  }, [showUnlocks]);
+  }, [showUnlocks, userId]);
 
   // Load on mount + listen for schedule changes from other tabs/pages
   useEffect(() => {
