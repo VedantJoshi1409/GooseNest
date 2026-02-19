@@ -106,7 +106,6 @@ export async function GET(request: NextRequest, { params }: Params) {
     const plan = await prisma.plan.findUnique({
       where: { id: user.plan.id },
       include: {
-        template: true,
         requirements: {
           where: { parentId: null },
           ...reqInclude,
@@ -167,7 +166,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       data: {
         name: name || template.name,
         userId,
-        templateId,
+        templateName: template.name,
       },
     });
 
@@ -180,7 +179,6 @@ export async function POST(request: NextRequest, { params }: Params) {
     const fullPlan = await prisma.plan.findUnique({
       where: { id: plan.id },
       include: {
-        template: true,
         requirements: {
           where: { parentId: null },
           ...reqInclude,
@@ -192,11 +190,20 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   // Custom requirements — create plan with provided requirements
+  const templateForName = await prisma.template.findUnique({
+    where: { id: templateId },
+    select: { name: true },
+  });
+
+  if (!templateForName) {
+    return NextResponse.json({ error: "Template not found" }, { status: 404 });
+  }
+
   const plan = await prisma.plan.create({
     data: {
       name: name || `Custom Plan`,
       userId,
-      templateId,
+      templateName: templateForName.name,
     },
   });
 
@@ -256,7 +263,6 @@ export async function POST(request: NextRequest, { params }: Params) {
   const fullPlan = await prisma.plan.findUnique({
     where: { id: plan.id },
     include: {
-      template: true,
       requirements: {
         where: { parentId: null },
         ...reqInclude,

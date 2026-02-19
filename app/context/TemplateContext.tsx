@@ -55,12 +55,13 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
         setIsLoading(true);
 
         // Fetch templates list if not cached (read-only, works for all users)
+        let currentTemplates = templates;
         if (templates.length === 0) {
           const templatesRes = await fetch("/api/templates");
           if (templatesRes.ok) {
-            const data = await templatesRes.json();
-            setTemplates(data);
-            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            currentTemplates = await templatesRes.json();
+            setTemplates(currentTemplates);
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(currentTemplates));
           }
         }
 
@@ -72,8 +73,11 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
             let saved: TemplateWithRequirements | null = null;
 
             if (degreeData.type === "plan" && degreeData.plan) {
+              const matchingTemplate = currentTemplates.find(
+                (t) => t.name === degreeData.plan.templateName
+              );
               saved = {
-                id: degreeData.plan.templateId ?? degreeData.plan.id,
+                id: matchingTemplate?.id ?? degreeData.plan.id,
                 name: degreeData.plan.name,
                 requirements: degreeData.plan.requirements,
               };
@@ -141,8 +145,11 @@ export function TemplateProvider({ children }: { children: ReactNode }) {
         let saved: TemplateWithRequirements | null = null;
 
         if (degreeData.type === "plan" && degreeData.plan) {
+          const matchingTemplate = templates.find(
+            (t) => t.name === degreeData.plan.templateName
+          );
           saved = {
-            id: degreeData.plan.templateId ?? degreeData.plan.id,
+            id: matchingTemplate?.id ?? degreeData.plan.id,
             name: degreeData.plan.name,
             requirements: degreeData.plan.requirements,
           };

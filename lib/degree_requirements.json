@@ -372,7 +372,28 @@
       },
       "Complete 2 additional AMATH courses at the 300- or 400-level",
       "Complete 1 additional AMATH course at the 400-level",
-      "Complete 4 additional courses from the options in List 1"
+      "Complete 4 additional courses from the options in List 1",
+      {
+        "amount": 4,
+        "options": [
+          "AMATH342",
+          "AMATH391",
+          "AMATH442",
+          "AMATH449",
+          "AMATH477",
+          "CO367",
+          "CO466",
+          "CS231",
+          "CS467",
+          "CS475",
+          "CS479",
+          "PMATH343",
+          "STAT331",
+          "STAT341",
+          "STAT441",
+          "STAT444"
+        ]
+      }
     ]
   },
   "Architectural Engineering (Bachelor of Applied Science - Honours)": {
@@ -389,7 +410,102 @@
           "CHE102",
           "MATH116"
         ]
-      }
+      },
+      {
+        "amount": 5,
+        "options": [
+          "AE105",
+          "AE121",
+          "AE125",
+          "AE199",
+          "MATH118"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "AE123",
+          "CIVE123",
+          "ENVE123",
+          "GEOE123"
+        ]
+      },
+      {
+        "amount": 6,
+        "options": [
+          "AE200",
+          "AE204",
+          "AE221",
+          "AE224",
+          "AE280",
+          "AE298"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "COMMST191",
+          "ENGL191"
+        ]
+      },
+      {
+        "amount": 5,
+        "options": [
+          "AE205",
+          "AE223",
+          "AE225",
+          "AE265",
+          "AE299"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 6,
+        "options": [
+          "AE279",
+          "AE300",
+          "AE303",
+          "AE353",
+          "AE377",
+          "AE398"
+        ]
+      },
+      {
+        "amount": 4,
+        "options": [
+          "AE310",
+          "AE325",
+          "AE399",
+          "CIVE507"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "AE392",
+          "CIVE392",
+          "ENVE392",
+          "GEOE392"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 3,
+        "options": [
+          "AE400",
+          "AE491",
+          "AE498"
+        ]
+      },
+      "Complete 3 or 4 approved electives",
+      {
+        "amount": 2,
+        "options": [
+          "AE425",
+          "AE499"
+        ]
+      },
+      "Complete 4 or 5 approved electives"
     ]
   },
   "Architectural Studies (Bachelor of Architectural Studies - Honours)": {
@@ -405,7 +521,70 @@
           "ARCH172",
           "ARCH192"
         ]
-      }
+      },
+      {
+        "amount": 5,
+        "options": [
+          "ARCH113",
+          "ARCH126",
+          "ARCH143",
+          "ARCH173",
+          "ARCH193"
+        ]
+      },
+      {
+        "amount": 4,
+        "options": [
+          "ARCH212",
+          "ARCH246",
+          "ARCH260",
+          "ARCH292"
+        ]
+      },
+      {
+        "amount": 5,
+        "options": [
+          "ARCH225",
+          "ARCH243",
+          "ARCH248",
+          "ARCH276",
+          "ARCH293"
+        ]
+      },
+      {
+        "amount": 5,
+        "options": [
+          "ARCH327",
+          "ARCH342",
+          "ARCH362",
+          "ARCH364",
+          "ARCH392"
+        ]
+      },
+      {
+        "amount": 2,
+        "options": [
+          "ARCH393",
+          "ARCH442"
+        ]
+      },
+      "Complete 2 approved electives",
+      {
+        "amount": 1,
+        "options": [
+          "ARCH492"
+        ]
+      },
+      "Complete 2 approved electives",
+      {
+        "amount": 3,
+        "options": [
+          "ARCH463",
+          "ARCH473",
+          "ARCH493"
+        ]
+      },
+      "Complete 1 approved elective"
     ]
   },
   "Biochemistry (Bachelor of Science - Honours)": {
@@ -707,7 +886,87 @@
           "SYDE111",
           "SYDE113"
         ]
-      }
+      },
+      {
+        "amount": 6,
+        "options": [
+          "BME102",
+          "BME122",
+          "BME162",
+          "BME186",
+          "SYDE112",
+          "SYDE114"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 8,
+        "options": [
+          "BME182",
+          "BME201",
+          "BME281",
+          "BME281L",
+          "BME282",
+          "BME285",
+          "BME285L",
+          "SYDE211"
+        ]
+      },
+      {
+        "amount": 8,
+        "options": [
+          "BME202",
+          "BME213",
+          "BME252",
+          "BME261",
+          "BME284",
+          "BME284L",
+          "BME294",
+          "BME294L"
+        ]
+      },
+      {
+        "amount": 6,
+        "options": [
+          "BME301",
+          "BME355",
+          "BME361",
+          "BME381",
+          "BME393",
+          "BME393L"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 7,
+        "options": [
+          "BME302",
+          "BME356",
+          "BME356L",
+          "BME362",
+          "BME364",
+          "BME384",
+          "BME386"
+        ]
+      },
+      {
+        "amount": 4,
+        "options": [
+          "BME400",
+          "BME401",
+          "BME411",
+          "BME461"
+        ]
+      },
+      "Complete 3 approved electives",
+      {
+        "amount": 2,
+        "options": [
+          "BME402",
+          "BME462"
+        ]
+      },
+      "Complete 4 approved electives"
     ]
   },
   "Biomedical Sciences (Bachelor of Science - Honours)": {
@@ -919,7 +1178,104 @@
           "MATH115",
           "MATH116"
         ]
-      }
+      },
+      {
+        "amount": 5,
+        "options": [
+          "CHE101",
+          "CHE161",
+          "CHE181",
+          "MATH118",
+          "PHYS115"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "COMMST100",
+          "COMMST223",
+          "EMLS101R",
+          "EMLS102R",
+          "EMLS129R",
+          "ENGL109",
+          "ENGL129R"
+        ]
+      },
+      {
+        "amount": 7,
+        "options": [
+          "CHE200",
+          "CHE220",
+          "CHE230",
+          "CHE290",
+          "CHEM262",
+          "CHEM262L",
+          "MATH217"
+        ]
+      },
+      {
+        "amount": 6,
+        "options": [
+          "CHE211",
+          "CHE225",
+          "CHE231",
+          "CHE241",
+          "CHE291",
+          "MATH218"
+        ]
+      },
+      {
+        "amount": 6,
+        "options": [
+          "CHE312",
+          "CHE314",
+          "CHE322",
+          "CHE330",
+          "CHE390",
+          "MSE261"
+        ]
+      },
+      {
+        "amount": 5,
+        "options": [
+          "CHE313",
+          "CHE331",
+          "CHE341",
+          "CHE361",
+          "CHE383"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 3,
+        "options": [
+          "CHE450",
+          "CHE480",
+          "CHE490"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CHE482",
+          "GENE403"
+        ]
+      },
+      "Complete 3 approved electives",
+      {
+        "amount": 1,
+        "options": [
+          "CHE491"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CHE483",
+          "GENE404"
+        ]
+      },
+      "Complete 4 approved electives"
     ]
   },
   "Chemistry (Bachelor of Science - Honours)": {
@@ -1046,7 +1402,41 @@
         ]
       },
       "Complete 1 additional course from the following subject codes: AMATH, CO, MATH, PMATH, STAT",
-      "The following cannot be used towards this academic plan: CHEM266 - Basic Organic Chemistry 1 (0.50)CHEM266L - Organic Chemistry Laboratory (0.25)CHEM267 - Basic Organic Chemistry 2 (0.50)CHEM267L - Organic Chemistry Laboratory (0.25)"
+      "The following cannot be used towards this academic plan: CHEM266 - Basic Organic Chemistry 1 (0.50)CHEM266L - Organic Chemistry Laboratory (0.25)CHEM267 - Basic Organic Chemistry 2 (0.50)CHEM267L - Organic Chemistry Laboratory (0.25)",
+      "Complete 3.0 units from the following list of courses",
+      {
+        "amount": 28,
+        "options": [
+          "CHEM209",
+          "CHEM224L",
+          "CHEM310",
+          "CHEM310L",
+          "CHEM313",
+          "CHEM323",
+          "CHEM331",
+          "CHEM333",
+          "CHEM340",
+          "CHEM350",
+          "CHEM350L",
+          "CHEM357",
+          "CHEM360",
+          "CHEM360L",
+          "CHEM363",
+          "CHEM370",
+          "CHEM381",
+          "CHEM382L",
+          "CHEM383",
+          "CHEM400",
+          "CHEM404",
+          "CHEM430",
+          "CHEM432",
+          "CHEM433",
+          "CHEM464",
+          "CHEM481",
+          "CHEM494A",
+          "CHEM494B"
+        ]
+      }
     ]
   },
   "Chemistry - Computational Specialization (Bachelor of Science - Honours)": {
@@ -1198,7 +1588,21 @@
           "PHYS467"
         ]
       },
-      "The following cannot be used towards this academic plan: CHEM266 - Basic Organic Chemistry 1 (0.50)CHEM266L - Organic Chemistry Laboratory (0.25)CHEM267 - Basic Organic Chemistry 2 (0.50)CHEM267L - Organic Chemistry Laboratory (0.25)"
+      "The following cannot be used towards this academic plan: CHEM266 - Basic Organic Chemistry 1 (0.50)CHEM266L - Organic Chemistry Laboratory (0.25)CHEM267 - Basic Organic Chemistry 2 (0.50)CHEM267L - Organic Chemistry Laboratory (0.25)",
+      {
+        "amount": 5,
+        "options": [
+          "AMATH382",
+          "BIOL266",
+          "BIOL382",
+          "CHEM400",
+          "CHEM404",
+          "CHEM430",
+          "NE451",
+          "NE452",
+          "PHYS359"
+        ]
+      }
     ]
   },
   "Civil Engineering (Bachelor of Applied Science - Honours)": {
@@ -1228,7 +1632,126 @@
           "COMMST191",
           "ENGL191"
         ]
-      }
+      },
+      {
+        "amount": 3,
+        "options": [
+          "CIVE105",
+          "CIVE199",
+          "MATH118"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "AE123",
+          "CIVE123",
+          "ENVE123",
+          "GEOE123"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CIVE121",
+          "ENVE121",
+          "GEOE121"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CIVE153",
+          "ENVE153",
+          "GEOE153"
+        ]
+      },
+      {
+        "amount": 5,
+        "options": [
+          "CIVE204",
+          "CIVE224",
+          "CIVE241",
+          "CIVE265",
+          "CIVE298"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CIVE221",
+          "GEOE221"
+        ]
+      },
+      {
+        "amount": 5,
+        "options": [
+          "CIVE205",
+          "CIVE222",
+          "CIVE230",
+          "CIVE280",
+          "CIVE299"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "AE392",
+          "CIVE392",
+          "ENVE392",
+          "GEOE392"
+        ]
+      },
+      {
+        "amount": 4,
+        "options": [
+          "CIVE303",
+          "CIVE332",
+          "CIVE341",
+          "CIVE398"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CIVE353",
+          "GEOE353"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CIVE382",
+          "ENVE382"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 3,
+        "options": [
+          "CIVE310",
+          "CIVE375",
+          "CIVE399"
+        ]
+      },
+      "Complete 3 approved electives",
+      {
+        "amount": 3,
+        "options": [
+          "CIVE400",
+          "CIVE491",
+          "CIVE498"
+        ]
+      },
+      "Complete 3 approved electives",
+      {
+        "amount": 2,
+        "options": [
+          "CIVE401",
+          "CIVE499"
+        ]
+      },
+      "Complete 4 approved electives"
     ]
   },
   "Classical Studies (Bachelor of Arts - Four-Year General)": {
@@ -1838,7 +2361,95 @@
       },
       "Complete 3 non-math courses, at least one of which is at the 200-, 300-, or 400-level, all from the same subject code, from the following choices: AE, BIOL, BME, CHE, CHEM, CIVE, EARTH, ECE, ECON, ENVE, GEOE, ME, MNS, MSE, MTE, NE, PHYS, SYDE",
       "Complete the List 1 and List 2 requirements below",
-      "Complete 4 additional courses, taken from List 2 or List 3; choices must be in at least two different subject codes (AMATH, CO, CS, PMATH, STAT), and 2 courses must be at the 400-level"
+      "Complete 4 additional courses, taken from List 2 or List 3; choices must be in at least two different subject codes (AMATH, CO, CS, PMATH, STAT), and 2 courses must be at the 400-level",
+      {
+        "amount": 2,
+        "options": [
+          {
+            "amount": 1,
+            "options": [
+              "AMATH250",
+              "AMATH251",
+              "AMATH350"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "CO250",
+              "CO255"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "CS245",
+              "CS245E",
+              "PMATH330",
+              "PMATH432"
+            ]
+          },
+          {
+            "amount": 1,
+            "options": [
+              "CS246",
+              "CS246E"
+            ]
+          }
+        ]
+      },
+      "Complete 2 courses from the following choices:",
+      {
+        "amount": 3,
+        "options": [
+          "AMATH342",
+          "CS475",
+          "PMATH370"
+        ]
+      },
+      "Complete no more than 1 from the following: CO353 - Computational Discrete Optimization (0.50)CO367 - Nonlinear Optimization (0.50)",
+      "Complete no more than 1 from the following: STAT340 - Stochastic Simulation Methods (0.50)STAT341 - Computational Statistics and Data Analysis (0.50)",
+      {
+        "amount": 36,
+        "options": [
+          "ACTSC447",
+          "AMATH343",
+          "AMATH382",
+          "AMATH383",
+          "AMATH391",
+          "AMATH442",
+          "AMATH449",
+          "AMATH455",
+          "AMATH477",
+          "BIOL382",
+          "CO351",
+          "CO370",
+          "CO372",
+          "CO450",
+          "CO452",
+          "CO454",
+          "CO456",
+          "CO463",
+          "CO466",
+          "CO471",
+          "CO485",
+          "CO487",
+          "CS341",
+          "CS431",
+          "CS451",
+          "CS466",
+          "CS476",
+          "CS479",
+          "CS480",
+          "CS482",
+          "CS485",
+          "CS487",
+          "STAT440",
+          "STAT441",
+          "STAT442",
+          "STAT444"
+        ]
+      }
     ]
   },
   "Computer Engineering (Bachelor of Applied Science - Honours)": {
@@ -1862,7 +2473,98 @@
           "COMMST192",
           "ENGL192"
         ]
-      }
+      },
+      {
+        "amount": 7,
+        "options": [
+          "ECE102",
+          "ECE106",
+          "ECE108",
+          "ECE124",
+          "ECE140",
+          "ECE192",
+          "MATH119"
+        ]
+      },
+      {
+        "amount": 6,
+        "options": [
+          "ECE109",
+          "ECE201",
+          "ECE204",
+          "ECE222",
+          "ECE240",
+          "ECE250"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ECE205",
+          "MATH211"
+        ]
+      },
+      {
+        "amount": 7,
+        "options": [
+          "ECE202",
+          "ECE203",
+          "ECE207",
+          "ECE208",
+          "ECE224",
+          "ECE252",
+          "ECE298"
+        ]
+      },
+      {
+        "amount": 5,
+        "options": [
+          "ECE301",
+          "ECE318",
+          "ECE327",
+          "ECE350",
+          "ECE380"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 2,
+        "options": [
+          "ECE302",
+          "ECE307"
+        ]
+      },
+      "Complete 2 Technical Electives from List 1",
+      "Complete 1 Technical Elective from List 1 or List 2",
+      "Complete 1 approved elective",
+      {
+        "amount": 1,
+        "options": [
+          "ECE401"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ECE498A",
+          "GENE403"
+        ]
+      },
+      "Complete 4 approved electives",
+      {
+        "amount": 1,
+        "options": [
+          "ECE402"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ECE498B",
+          "GENE404"
+        ]
+      },
+      "Complete 4 approved electives"
     ]
   },
   "Business Administration and Computer Science Double Degree (Bachelor of Business Administration and Bachelor of Computer Science - Honours)": {
@@ -2344,7 +3046,21 @@
       "Complete 3 additional courses from: ACTSC, AMATH, CO, PMATH, STAT (see Additional Constraints)",
       "The following cannot be used towards this academic plan: ACTSC221 - Introductory Financial Mathematics (Non-Specialist Level) (0.50)CO353 - Computational Discrete Optimization (0.50)CO380 - Mathematical Discovery and Invention (0.50)CO480 - History of Mathematics (0.50)",
       "Complete 1 additional course from the options in List 1",
-      "Complete a total of 5.0 units of non-math courses satisfying the Breadth and Depth Requirement listed under Graduation Requirements"
+      "Complete a total of 5.0 units of non-math courses satisfying the Breadth and Depth Requirement listed under Graduation Requirements",
+      {
+        "amount": 1,
+        "options": [
+          {
+            "amount": 3,
+            "options": [
+              "CO487",
+              "CS499T",
+              "STAT440"
+            ]
+          },
+          "Choose any course from the following: CS440-CS498, any CS course at the 600- or 700-level (see Additional Constraints)"
+        ]
+      }
     ]
   },
   "Computer Science (Bachelor of Mathematics - Joint Honours)": {
@@ -2909,46 +3625,6 @@
       "Complete 1 additional course at the 300- or 400-level from: ACTSC, AMATH, CO, CS, MATBUS, MATH, PMATH, STAT"
     ]
   },
-  "Bachelor of Applied Science Degree Requirements": {
-    "name": "Bachelor of Applied Science Degree Requirements",
-    "href": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/B1ligZqRn?bc=true&bcCurrent=Bachelor%20of%20Applied%20Science%20Degree%20Requirements&bcGroup=Degree%20Requirements&bcItemType=programs",
-    "requirements": []
-  },
-  "Bachelor of Arts Degree Requirements (Arts)": {
-    "name": "Bachelor of Arts Degree Requirements (Arts)",
-    "href": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SyLzAe5R3?bc=true&bcCurrent=Bachelor%20of%20Arts%20Degree%20Requirements%20(Arts)&bcGroup=Degree%20Requirements&bcItemType=programs",
-    "requirements": []
-  },
-  "Bachelor of Arts Degree Requirements (Health)": {
-    "name": "Bachelor of Arts Degree Requirements (Health)",
-    "href": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/ByFGuzIba?bc=true&bcCurrent=Bachelor%20of%20Arts%20Degree%20Requirements%20(Health)&bcGroup=Degree%20Requirements&bcItemType=programs",
-    "requirements": []
-  },
-  "Bachelor of Computer Science Degree Requirements": {
-    "name": "Bachelor of Computer Science Degree Requirements",
-    "href": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r1y1WO5ka?bc=true&bcCurrent=Bachelor%20of%20Computer%20Science%20Degree%20Requirements&bcGroup=Degree%20Requirements&bcItemType=programs",
-    "requirements": []
-  },
-  "Bachelor of Environmental Studies Degree Requirements": {
-    "name": "Bachelor of Environmental Studies Degree Requirements",
-    "href": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/S17YP6Wla?bc=true&bcCurrent=Bachelor%20of%20Environmental%20Studies%20Degree%20Requirements&bcGroup=Degree%20Requirements&bcItemType=programs",
-    "requirements": []
-  },
-  "Bachelor of Mathematics Degree Requirements": {
-    "name": "Bachelor of Mathematics Degree Requirements",
-    "href": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rJj6aXDk6?bc=true&bcCurrent=Bachelor%20of%20Mathematics%20Degree%20Requirements&bcGroup=Degree%20Requirements&bcItemType=programs",
-    "requirements": []
-  },
-  "Bachelor of Science Degree Requirements (Health)": {
-    "name": "Bachelor of Science Degree Requirements (Health)",
-    "href": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SkRI178-T?bc=true&bcCurrent=Bachelor%20of%20Science%20Degree%20Requirements%20(Health)&bcGroup=Degree%20Requirements&bcItemType=programs",
-    "requirements": []
-  },
-  "Bachelor of Science Degree Requirements (Science)": {
-    "name": "Bachelor of Science Degree Requirements (Science)",
-    "href": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/BJod_8jW6?bc=true&bcCurrent=Bachelor%20of%20Science%20Degree%20Requirements%20(Science)&bcGroup=Degree%20Requirements&bcItemType=programs",
-    "requirements": []
-  },
   "Earth Sciences - Geology Specialization (Bachelor of Science - Honours)": {
     "name": "Earth Sciences - Geology Specialization (Bachelor of Science - Honours)",
     "href": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/SyP1kRCs3?bc=true&bcCurrent=Earth%20Sciences%20-%20Geology%20Specialization%20(Bachelor%20of%20Science%20-%20Honours)&bcGroup=Earth%20Sciences&bcItemType=programs",
@@ -3376,7 +4052,104 @@
           "COMMST192",
           "ENGL192"
         ]
-      }
+      },
+      {
+        "amount": 7,
+        "options": [
+          "ECE102",
+          "ECE106",
+          "ECE108",
+          "ECE124",
+          "ECE140",
+          "ECE192",
+          "MATH119"
+        ]
+      },
+      {
+        "amount": 6,
+        "options": [
+          "ECE109",
+          "ECE201",
+          "ECE204",
+          "ECE222",
+          "ECE240",
+          "ECE250"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ECE205",
+          "MATH211"
+        ]
+      },
+      {
+        "amount": 6,
+        "options": [
+          "ECE202",
+          "ECE203",
+          "ECE207",
+          "ECE231",
+          "ECE260",
+          "ECE298"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ECE206",
+          "MATH212"
+        ]
+      },
+      {
+        "amount": 5,
+        "options": [
+          "ECE301",
+          "ECE318",
+          "ECE340",
+          "ECE375",
+          "ECE380"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 2,
+        "options": [
+          "ECE302",
+          "ECE307"
+        ]
+      },
+      "Complete 2 Technical Electives from List 1",
+      "Complete 1 Technical Elective from List 1 or List 2",
+      "Complete 1 approved elective",
+      {
+        "amount": 1,
+        "options": [
+          "ECE401"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ECE498A",
+          "GENE403"
+        ]
+      },
+      "Complete 4 approved electives",
+      {
+        "amount": 1,
+        "options": [
+          "ECE402"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ECE498B",
+          "GENE404"
+        ]
+      },
+      "Complete 4 approved electives"
     ]
   },
   "English - Creative and Professional Writing (Bachelor of Arts - Four-Year General)": {
@@ -5406,7 +6179,142 @@
           "ENVE115",
           "GEOE115"
         ]
-      }
+      },
+      {
+        "amount": 2,
+        "options": [
+          "ENVE176",
+          "MATH118"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "AE123",
+          "CIVE123",
+          "ENVE123",
+          "GEOE123"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CIVE121",
+          "ENVE121",
+          "GEOE121"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CIVE153",
+          "ENVE153",
+          "GEOE153"
+        ]
+      },
+      {
+        "amount": 3,
+        "options": [
+          "ENVE200",
+          "ENVE275",
+          "ENVE298"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ENVE223",
+          "GEOE223"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ENVE224",
+          "GEOE224"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ENVE280",
+          "GEOE280"
+        ]
+      },
+      {
+        "amount": 4,
+        "options": [
+          "ENVE225",
+          "ENVE277",
+          "ENVE279",
+          "ENVE299"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CIVE382",
+          "ENVE382"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 3,
+        "options": [
+          "ENVE330",
+          "ENVE375",
+          "ENVE398"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "AE392",
+          "CIVE392",
+          "ENVE392",
+          "GEOE392"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CIVE353",
+          "GEOE353"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 3,
+        "options": [
+          "ENVE335",
+          "ENVE376",
+          "ENVE399"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ENVE391",
+          "GEOE391"
+        ]
+      },
+      "Complete 2 approved electives",
+      {
+        "amount": 2,
+        "options": [
+          "ENVE400",
+          "ENVE498"
+        ]
+      },
+      "Complete 4 approved electives",
+      {
+        "amount": 2,
+        "options": [
+          "ENVE401",
+          "ENVE499"
+        ]
+      },
+      "Complete 4 approved electives"
     ]
   },
   "Environmental Sciences - Ecology Specialization (Bachelor of Science - Honours)": {
@@ -5465,6 +6373,62 @@
         "options": [
           "MATH114",
           "MATH127"
+        ]
+      },
+      {
+        "amount": 2,
+        "options": [
+          "BIOL211",
+          "BIOL225",
+          "BIOL241",
+          "BIOL310",
+          "BIOL312",
+          "BIOL323",
+          "BIOL325",
+          "BIOL346",
+          "BIOL370",
+          "BIOL383",
+          "BIOL414",
+          "BIOL447",
+          "BIOL450",
+          "BIOL452",
+          "BIOL455",
+          "BIOL457",
+          "BIOL458",
+          "BIOL461",
+          "BIOL462",
+          "BIOL470",
+          "BIOL479",
+          "BIOL485",
+          "BIOL489",
+          "BIOL490A",
+          "BIOL490B",
+          "BIOL490C",
+          "BIOL499A",
+          "BIOL499B"
+        ]
+      },
+      {
+        "amount": 4,
+        "options": [
+          "BIOL414",
+          "BIOL447",
+          "BIOL450",
+          "BIOL452",
+          "BIOL455",
+          "BIOL457",
+          "BIOL458",
+          "BIOL461",
+          "BIOL462",
+          "BIOL470",
+          "BIOL479",
+          "BIOL485",
+          "BIOL489",
+          "BIOL490A",
+          "BIOL490B",
+          "BIOL490C",
+          "BIOL499A",
+          "BIOL499B"
         ]
       }
     ]
@@ -5942,6 +6906,83 @@
           "GSJ222",
           "PHIL202"
         ]
+      },
+      "Complete 4.0 additional units of GSJ courses or from the following list of courses",
+      {
+        "amount": 71,
+        "options": [
+          "CI250",
+          "CLAS311",
+          "COMMST226",
+          "COMMST301",
+          "COMMST302",
+          "COMMST402",
+          "COMMST430",
+          "COMMST471",
+          "ENGL208N",
+          "ENGL248",
+          "ENGL325",
+          "ENGL407",
+          "ENGL463",
+          "ERS225",
+          "ERS265",
+          "ERS288",
+          "FR485",
+          "GERON352",
+          "GSJ463",
+          "HIST209",
+          "HIST255",
+          "HIST271",
+          "HIST277",
+          "HIST351",
+          "HLTH101",
+          "HLTH102",
+          "HLTH352",
+          "INDG216",
+          "INTEG221",
+          "ITALST111",
+          "ITALST392",
+          "JS218",
+          "KIN352",
+          "LS237",
+          "LS464",
+          "LS471",
+          "LS492",
+          "PHIL201",
+          "PHIL291",
+          "PHIL302",
+          "PSCI370",
+          "PSCI420",
+          "PSCI421",
+          "PSCI472",
+          "PSYCH235",
+          "PSYCH236",
+          "PSYCH318",
+          "REC201",
+          "REC362",
+          "REC373",
+          "RCS218",
+          "RCS221",
+          "RCS254",
+          "SDS220R",
+          "SDS310R",
+          "SDS354R",
+          "SDS357R",
+          "SDS410R",
+          "SDS415R",
+          "SI121R",
+          "SI221R",
+          "SRF101",
+          "SRF111",
+          "SRF204",
+          "SOC352",
+          "SOCWK357R",
+          "SPAN150",
+          "SPAN387",
+          "SPAN400",
+          "VCULT216",
+          "VCULT281"
+        ]
       }
     ]
   },
@@ -5967,6 +7008,83 @@
           "GSJ222",
           "PHIL202"
         ]
+      },
+      "Complete 4.0 additional units of GSJ courses or from the following list of courses",
+      {
+        "amount": 71,
+        "options": [
+          "CI250",
+          "CLAS311",
+          "COMMST226",
+          "COMMST301",
+          "COMMST302",
+          "COMMST402",
+          "COMMST430",
+          "COMMST471",
+          "ENGL208N",
+          "ENGL248",
+          "ENGL325",
+          "ENGL407",
+          "ENGL463",
+          "ERS225",
+          "ERS265",
+          "ERS288",
+          "FR485",
+          "GERON352",
+          "GSJ463",
+          "HIST209",
+          "HIST255",
+          "HIST271",
+          "HIST277",
+          "HIST351",
+          "HLTH101",
+          "HLTH102",
+          "HLTH352",
+          "INDG216",
+          "INTEG221",
+          "ITALST111",
+          "ITALST392",
+          "JS218",
+          "KIN352",
+          "LS237",
+          "LS464",
+          "LS471",
+          "LS492",
+          "PHIL201",
+          "PHIL291",
+          "PHIL302",
+          "PSCI370",
+          "PSCI420",
+          "PSCI421",
+          "PSCI472",
+          "PSYCH235",
+          "PSYCH236",
+          "PSYCH318",
+          "REC201",
+          "REC362",
+          "REC373",
+          "RCS218",
+          "RCS221",
+          "RCS254",
+          "SDS220R",
+          "SDS310R",
+          "SDS354R",
+          "SDS357R",
+          "SDS410R",
+          "SDS415R",
+          "SI121R",
+          "SI221R",
+          "SRF101",
+          "SRF111",
+          "SRF204",
+          "SOC352",
+          "SOCWK357R",
+          "SPAN150",
+          "SPAN387",
+          "SPAN400",
+          "VCULT216",
+          "VCULT281"
+        ]
       }
     ]
   },
@@ -5989,6 +7107,83 @@
         "options": [
           "GSJ222",
           "PHIL202"
+        ]
+      },
+      "Complete 3.0 additional units of GSJ courses or from the following list of courses",
+      {
+        "amount": 71,
+        "options": [
+          "CI250",
+          "CLAS311",
+          "COMMST226",
+          "COMMST301",
+          "COMMST302",
+          "COMMST402",
+          "COMMST430",
+          "COMMST471",
+          "ENGL208N",
+          "ENGL248",
+          "ENGL325",
+          "ENGL407",
+          "ENGL463",
+          "ERS225",
+          "ERS265",
+          "ERS288",
+          "FR485",
+          "GERON352",
+          "GSJ463",
+          "HIST209",
+          "HIST255",
+          "HIST271",
+          "HIST277",
+          "HIST351",
+          "HLTH101",
+          "HLTH102",
+          "HLTH352",
+          "INDG216",
+          "INTEG221",
+          "ITALST111",
+          "ITALST392",
+          "JS218",
+          "KIN352",
+          "LS237",
+          "LS464",
+          "LS471",
+          "LS492",
+          "PHIL201",
+          "PHIL291",
+          "PHIL302",
+          "PSCI370",
+          "PSCI420",
+          "PSCI421",
+          "PSCI472",
+          "PSYCH235",
+          "PSYCH236",
+          "PSYCH318",
+          "REC201",
+          "REC362",
+          "REC373",
+          "RCS218",
+          "RCS221",
+          "RCS254",
+          "SDS220R",
+          "SDS310R",
+          "SDS354R",
+          "SDS357R",
+          "SDS410R",
+          "SDS415R",
+          "SI121R",
+          "SI221R",
+          "SRF101",
+          "SRF111",
+          "SRF204",
+          "SOC352",
+          "SOCWK357R",
+          "SPAN150",
+          "SPAN387",
+          "SPAN400",
+          "VCULT216",
+          "VCULT281"
         ]
       }
     ]
@@ -6164,7 +7359,166 @@
           "ENVE115",
           "GEOE115"
         ]
-      }
+      },
+      {
+        "amount": 2,
+        "options": [
+          "CIVE105",
+          "MATH118"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "AE123",
+          "CIVE123",
+          "ENVE123",
+          "GEOE123"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CIVE121",
+          "ENVE121",
+          "GEOE121"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CIVE153",
+          "ENVE153",
+          "GEOE153"
+        ]
+      },
+      {
+        "amount": 2,
+        "options": [
+          "EARTH238",
+          "GEOE298"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ENVE223",
+          "GEOE223"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ENVE224",
+          "GEOE224"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ENVE280",
+          "GEOE280"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 5,
+        "options": [
+          "CIVE204",
+          "EARTH231",
+          "EARTH235",
+          "EARTH260",
+          "GEOE299"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CIVE221",
+          "GEOE221"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 4,
+        "options": [
+          "EARTH232",
+          "EARTH458",
+          "EARTH458L",
+          "GEOE398"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CIVE353",
+          "GEOE353"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CIVE392",
+          "ENVE392",
+          "GEOE392"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 5,
+        "options": [
+          "EARTH333",
+          "EARTH437",
+          "EARTH438",
+          "ENVE382",
+          "GEOE399"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 1,
+        "options": [
+          "EARTH390"
+        ]
+      },
+      "Note: EARTH390 is offered after winter term exams. It is 10 days long and finishes before the spring term begins.",
+      {
+        "amount": 2,
+        "options": [
+          "GEOE400",
+          "GEOE498"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CIVE354",
+          "GEOE354"
+        ]
+      },
+      "Complete 3 approved electives",
+      {
+        "amount": 2,
+        "options": [
+          "GEOE401",
+          "GEOE499"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CIVE554",
+          "GEOE554"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ENVE391",
+          "GEOE391"
+        ]
+      },
+      "Complete 2 approved electives"
     ]
   },
   "Geomatics (Bachelor of Environmental Studies - Honours)": {
@@ -7247,21 +8601,6 @@
       "Complete 1.0 additional unit of LS courses at the 400-level"
     ]
   },
-  "Liberal Studies (Bachelor of Arts - Four-Year General)": {
-    "name": "Liberal Studies (Bachelor of Arts - Four-Year General)",
-    "href": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/r1lSekC0j2?bc=true&bcCurrent=Liberal%20Studies%20(Bachelor%20of%20Arts%20-%20Four-Year%20General)&bcGroup=Liberal%20Studies&bcItemType=programs",
-    "requirements": []
-  },
-  "Liberal Studies (Bachelor of Arts - Honours)": {
-    "name": "Liberal Studies (Bachelor of Arts - Honours)",
-    "href": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/rygHgyCCin?bc=true&bcCurrent=Liberal%20Studies%20(Bachelor%20of%20Arts%20-%20Honours)&bcGroup=Liberal%20Studies&bcItemType=programs",
-    "requirements": []
-  },
-  "Liberal Studies (Bachelor of Arts - Three-Year General)": {
-    "name": "Liberal Studies (Bachelor of Arts - Three-Year General)",
-    "href": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HkeHx1RAjh?bc=true&bcCurrent=Liberal%20Studies%20(Bachelor%20of%20Arts%20-%20Three-Year%20General)&bcGroup=Liberal%20Studies&bcItemType=programs",
-    "requirements": []
-  },
   "Management Engineering (Bachelor of Applied Science - Honours)": {
     "name": "Management Engineering (Bachelor of Applied Science - Honours)",
     "href": "https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog#/programs/HkzsJ1CRsh?bc=true&bcCurrent=Management%20Engineering%20(Bachelor%20of%20Applied%20Science%20-%20Honours)&bcGroup=Management%20Engineering&bcItemType=programs",
@@ -7275,7 +8614,100 @@
           "MSE100",
           "MSE121"
         ]
-      }
+      },
+      {
+        "amount": 5,
+        "options": [
+          "GENE123",
+          "MATH118",
+          "MSE100B",
+          "MSE131",
+          "PHYS115"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "COMMST192",
+          "ENGL192",
+          "UCR192E"
+        ]
+      },
+      "Complete 1 course from the Natural Science list.",
+      {
+        "amount": 5,
+        "options": [
+          "MSE200A",
+          "MSE240",
+          "MSE251",
+          "MSE261",
+          "MSE271"
+        ]
+      },
+      "Complete 1 course from the Natural Science list.",
+      {
+        "amount": 5,
+        "options": [
+          "MSE200B",
+          "MSE232",
+          "MSE245",
+          "MSE253",
+          "MSE263"
+        ]
+      },
+      "Complete 1 course from the Natural Science list.",
+      {
+        "amount": 6,
+        "options": [
+          "MSE211",
+          "MSE300A",
+          "MSE334",
+          "MSE342",
+          "MSE431",
+          "MSE446"
+        ]
+      },
+      {
+        "amount": 5,
+        "options": [
+          "MSE300B",
+          "MSE302",
+          "MSE332",
+          "MSE333",
+          "MSE343"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 2,
+        "options": [
+          "MSE400A",
+          "MSE434"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "GENE403",
+          "MSE401"
+        ]
+      },
+      "Complete 3 approved electives",
+      {
+        "amount": 2,
+        "options": [
+          "MSE311",
+          "MSE400B"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "GENE404",
+          "MSE402"
+        ]
+      },
+      "Complete 3 approved electives"
     ]
   },
   "Materials and Nanosciences (Bachelor of Science - Honours)": {
@@ -8786,7 +10218,94 @@
           "ME100",
           "PHYS115"
         ]
-      }
+      },
+      {
+        "amount": 5,
+        "options": [
+          "MATH118",
+          "ME100B",
+          "ME101",
+          "ME115",
+          "ME123"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 6,
+        "options": [
+          "ME200A",
+          "ME201",
+          "ME202",
+          "ME219",
+          "ME230",
+          "ME269"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 6,
+        "options": [
+          "ME200B",
+          "ME203",
+          "ME212",
+          "ME220",
+          "ME250",
+          "ME262"
+        ]
+      },
+      {
+        "amount": 6,
+        "options": [
+          "ME300A",
+          "ME303",
+          "ME321",
+          "ME340",
+          "ME351",
+          "ME354"
+        ]
+      },
+      {
+        "amount": 7,
+        "options": [
+          "ME300B",
+          "ME322",
+          "ME353",
+          "ME360",
+          "ME362",
+          "ME380",
+          "MSE261"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ME400A"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "GENE403",
+          "ME481",
+          "MTE481"
+        ]
+      },
+      "Complete 4 or 5 approved electives",
+      {
+        "amount": 1,
+        "options": [
+          "ME400B"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "GENE404",
+          "ME482",
+          "MTE482"
+        ]
+      },
+      "Complete 4 or 5 approved electives"
     ]
   },
   "Mechatronics Engineering (Bachelor of Applied Science - Honours)": {
@@ -8802,7 +10321,81 @@
           "MTE100",
           "MTE121"
         ]
-      }
+      },
+      {
+        "amount": 6,
+        "options": [
+          "MATH118",
+          "MTE100B",
+          "MTE111",
+          "MTE119",
+          "MTE120",
+          "MTE140"
+        ]
+      },
+      {
+        "amount": 6,
+        "options": [
+          "MTE182",
+          "MTE200A",
+          "MTE201",
+          "MTE202",
+          "MTE219",
+          "MTE262"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 6,
+        "options": [
+          "MTE200B",
+          "MTE203",
+          "MTE204",
+          "MTE220",
+          "MTE241",
+          "MTE252"
+        ]
+      },
+      {
+        "amount": 6,
+        "options": [
+          "MTE300A",
+          "MTE309",
+          "MTE320",
+          "MTE321",
+          "MTE325",
+          "MTE351"
+        ]
+      },
+      {
+        "amount": 6,
+        "options": [
+          "MSE261",
+          "MTE300B",
+          "MTE322",
+          "MTE352",
+          "MTE360",
+          "MTE380"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 3,
+        "options": [
+          "MTE400A",
+          "MTE481",
+          "MTE484"
+        ]
+      },
+      "Complete 3 approved electives",
+      {
+        "amount": 2,
+        "options": [
+          "MTE400B",
+          "MTE482"
+        ]
+      },
+      "Complete 4 approved electives"
     ]
   },
   "Medicinal Chemistry (Bachelor of Science - Honours)": {
@@ -9079,7 +10672,107 @@
           "NE112",
           "NE121"
         ]
-      }
+      },
+      {
+        "amount": 6,
+        "options": [
+          "MATH119",
+          "NE110",
+          "NE113",
+          "NE125",
+          "NE131",
+          "NE140"
+        ]
+      },
+      {
+        "amount": 5,
+        "options": [
+          "NE215",
+          "NE216",
+          "NE220L",
+          "NE222",
+          "NE241"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "COMMST100",
+          "COMMST223",
+          "EMLS101R",
+          "EMLS102R",
+          "EMLS129R",
+          "ENGL109",
+          "ENGL129R"
+        ]
+      },
+      {
+        "amount": 6,
+        "options": [
+          "NE217",
+          "NE225",
+          "NE226",
+          "NE226L",
+          "NE242",
+          "NE281"
+        ]
+      },
+      {
+        "amount": 6,
+        "options": [
+          "MSE261",
+          "NE318",
+          "NE320L",
+          "NE332",
+          "NE333",
+          "NE343"
+        ]
+      },
+      {
+        "amount": 5,
+        "options": [
+          "NE307",
+          "NE330L",
+          "NE334",
+          "NE336",
+          "NE352"
+        ]
+      },
+      "Complete 2 approved electives",
+      {
+        "amount": 1,
+        "options": [
+          "GENE403",
+          "NE408"
+        ]
+      },
+      {
+        "amount": 2,
+        "options": [
+          "NE454A",
+          "NE454B",
+          "NE454C",
+          "NE454D"
+        ]
+      },
+      "Complete 4 approved electives",
+      {
+        "amount": 1,
+        "options": [
+          "GENE404",
+          "NE409"
+        ]
+      },
+      {
+        "amount": 2,
+        "options": [
+          "NE455A",
+          "NE455B",
+          "NE455C",
+          "NE455D"
+        ]
+      },
+      "Complete 4 approved electives"
     ]
   },
   "Peace and Conflict Studies (Bachelor of Arts - Four-Year General)": {
@@ -10057,6 +11750,23 @@
           "PSYCH101",
           "PSYCH101R"
         ]
+      },
+      {
+        "amount": 4,
+        "options": [
+          "Complete at least 1 course from: ACTSC, AMATH, CO, COMM, MATBUS, MATH, MTHEL, PMATH, STAT",
+          "Complete at least 1 course from: ANTH, ECON, GSJ, LS, PACS, PSCI, SDS, SMF, SOCWK, STV",
+          "Complete at least 1 course from: ARABIC, ASL, CHINA, CI, CROAT, DUTCH, EASIA, FR, GER, GRK, INDENT, INDG, ITAL, ITALST, JAPAN, JS, KOREA, LAT, MOHAWK, PORT, REES, RUSS, SI, SPAN",
+          "Complete at least 1 course from: BIOL, CHEM, EARTH, MNS, PHYS, SCI",
+          "Complete at least 1 course from: CLAS, COMMST, HIST, HUMSC, INDG, MEDVL, PHIL, RS, VCULT",
+          "Complete at least 1 course from: CS",
+          "Complete at least 1 course from: ENBUS, ENVS, ERS, GEOG, INDEV, INTEG, PLAN",
+          "Complete at least 1 course from: ENGL",
+          "Complete at least 1 course from: FINE, MUSIC, THPERF",
+          "Complete at least 1 course from: GERON, HEALTH, HLTH, KIN",
+          "Complete at least 1 course from: PSYCH (excluding PSYCH101/PSYCH101R)",
+          "Complete at least 1 course from: SOC"
+        ]
       }
     ]
   },
@@ -10576,6 +12286,26 @@
           },
           "Complete 0.5 unit of additional Science lecture or labs, any level"
         ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ACTSC231",
+          "AFM333",
+          "ARBUS301",
+          "BET300",
+          "ECON211",
+          "ECON311",
+          "ECON361",
+          "ECON372",
+          "HRM200",
+          "HRM301",
+          "INDEV100",
+          "MSE311",
+          "MSE432",
+          "STAT231",
+          "STAT333"
+        ]
       }
     ]
   },
@@ -10684,6 +12414,26 @@
           "COMMST193",
           "ENGL193"
         ]
+      },
+      {
+        "amount": 2,
+        "options": [
+          "ACTSC231",
+          "AFM333",
+          "ARBUS301",
+          "BET300",
+          "ECON211",
+          "ECON311",
+          "ECON361",
+          "ECON372",
+          "HRM200",
+          "HRM301",
+          "INDEV100",
+          "MSE311",
+          "MSE432",
+          "STAT231",
+          "STAT333"
+        ]
       }
     ]
   },
@@ -10743,6 +12493,26 @@
         "options": [
           "COMMST193",
           "ENGL193"
+        ]
+      },
+      {
+        "amount": 2,
+        "options": [
+          "ACTSC231",
+          "AFM333",
+          "ARBUS301",
+          "BET300",
+          "ECON211",
+          "ECON311",
+          "ECON361",
+          "ECON372",
+          "HRM200",
+          "HRM301",
+          "INDEV100",
+          "MSE311",
+          "MSE432",
+          "STAT231",
+          "STAT333"
         ]
       }
     ]
@@ -10826,6 +12596,26 @@
         "options": [
           "COMMST193",
           "ENGL193"
+        ]
+      },
+      {
+        "amount": 2,
+        "options": [
+          "ACTSC231",
+          "AFM333",
+          "ARBUS301",
+          "BET300",
+          "ECON211",
+          "ECON311",
+          "ECON361",
+          "ECON372",
+          "HRM200",
+          "HRM301",
+          "INDEV100",
+          "MSE311",
+          "MSE432",
+          "STAT231",
+          "STAT333"
         ]
       }
     ]
@@ -11250,7 +13040,107 @@
           "MATH135",
           "SE101"
         ]
-      }
+      },
+      {
+        "amount": 6,
+        "options": [
+          "CS138",
+          "ECE124",
+          "ECE140",
+          "ECE192",
+          "MATH119",
+          "SE102"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 5,
+        "options": [
+          "CS241",
+          "ECE222",
+          "SE201",
+          "SE212",
+          "STAT206"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "ECE105",
+          "PHYS115",
+          "PHYS121"
+        ]
+      },
+      {
+        "amount": 5,
+        "options": [
+          "CS240",
+          "CS247",
+          "CS348",
+          "MATH239",
+          "SE202"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 6,
+        "options": [
+          "CS341",
+          "MATH213",
+          "SE301",
+          "SE350",
+          "SE464",
+          "SE465"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 5,
+        "options": [
+          "CS343",
+          "ECE358",
+          "SE302",
+          "SE380",
+          "SE463"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "CS349",
+          "CS449",
+          "MSE343"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 1,
+        "options": [
+          "SE401"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "GENE403",
+          "SE490"
+        ]
+      },
+      "Complete 4 approved electives",
+      {
+        "amount": 1,
+        "options": [
+          "SE402"
+        ]
+      },
+      {
+        "amount": 1,
+        "options": [
+          "GENE404",
+          "SE491"
+        ]
+      },
+      "Complete 4 approved electives"
     ]
   },
   "Spanish (Bachelor of Arts - Four-Year General)": {
@@ -11484,7 +13374,84 @@
           "SYDE161",
           "SYDE181"
         ]
-      }
+      },
+      {
+        "amount": 7,
+        "options": [
+          "SYDE102",
+          "SYDE112",
+          "SYDE114",
+          "SYDE162",
+          "SYDE192",
+          "SYDE192L",
+          "SYDE223"
+        ]
+      },
+      "Complete 1 approved elective",
+      {
+        "amount": 7,
+        "options": [
+          "SYDE182",
+          "SYDE201",
+          "SYDE211",
+          "SYDE261",
+          "SYDE263",
+          "SYDE283",
+          "SYDE285"
+        ]
+      },
+      {
+        "amount": 7,
+        "options": [
+          "SYDE202",
+          "SYDE212",
+          "SYDE252",
+          "SYDE262",
+          "SYDE286",
+          "SYDE292",
+          "SYDE292L"
+        ]
+      },
+      {
+        "amount": 6,
+        "options": [
+          "SYDE301",
+          "SYDE312",
+          "SYDE351",
+          "SYDE361",
+          "SYDE381",
+          "SYDE383"
+        ]
+      },
+      {
+        "amount": 6,
+        "options": [
+          "SYDE300",
+          "SYDE302",
+          "SYDE352",
+          "SYDE352L",
+          "SYDE362",
+          "SYDE411"
+        ]
+      },
+      "Complete 2 approved electives",
+      {
+        "amount": 3,
+        "options": [
+          "SYDE401",
+          "SYDE461",
+          "SYDE532"
+        ]
+      },
+      "Complete 3 approved electives",
+      {
+        "amount": 2,
+        "options": [
+          "SYDE402",
+          "SYDE462"
+        ]
+      },
+      "Complete 4 approved electives"
     ]
   },
   "Theatre and Performance (Bachelor of Arts - Honours)": {

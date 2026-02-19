@@ -74,7 +74,6 @@ export default function DegreeModal({
   const [isCreatingCustom, setIsCreatingCustom] = useState(false);
   const [planName, setPlanName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
-  const [originalDegreeId, setOriginalDegreeId] = useState<number | null>(null);
   const [isDirty, setIsDirty] = useState(false);
 
   // Custom requirement form state
@@ -207,12 +206,11 @@ export default function DegreeModal({
           }
 
           if (data.type === "plan" && data.plan) {
-            const templateId = data.plan.templateId ?? data.plan.id;
-            setSearchQuery(data.plan.template?.name || data.plan.name);
+            const matchingTemplate = templates.find(t => t.name === data.plan.templateName);
+            setSearchQuery(data.plan.templateName || data.plan.name);
             setPlanName(data.plan.name);
-            setOriginalDegreeId(templateId);
             setSelectedDegree({
-              id: templateId,
+              id: matchingTemplate?.id ?? 0,
               name: data.plan.name,
               requirements: data.plan.requirements || [],
             });
@@ -238,7 +236,6 @@ export default function DegreeModal({
       setIsCreatingCustom(false);
       setPlanName("");
       setIsEditingName(false);
-      setOriginalDegreeId(null);
       setIsDirty(false);
       resetCustomForm();
     }
@@ -402,8 +399,7 @@ export default function DegreeModal({
         plan: {
           id: selectedDegree.id,
           name: planName || selectedDegree.name,
-          templateId: selectedDegree.id,
-          template: { name: templateData.name },
+          templateName: templateData.name,
           requirements: copiedRequirements,
         },
       };

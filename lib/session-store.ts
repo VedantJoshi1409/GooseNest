@@ -50,8 +50,7 @@ export interface AnonDegree {
   plan?: {
     id: number;
     name: string;
-    templateId: number;
-    template: { name: string };
+    templateName: string;
     requirements: RequirementNode[];
   };
 }
