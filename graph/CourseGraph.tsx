@@ -65,6 +65,7 @@ export default function CourseGraph() {
   const graphRef = useRef<ForceGraph3DInstance | null>(null);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [showUnlocks, setShowUnlocks] = useState(false);
+  const [renderError, setRenderError] = useState<string | null>(null);
   const { user } = useAuth();
   const userId = user?.id;
 
@@ -213,65 +214,74 @@ export default function CourseGraph() {
         return;
       }
 
-      graphRef.current = ForceGraph3DFn()(container)
-        .width(container.clientWidth)
-        .height(container.clientHeight)
-        .graphData(data)
-        .nodeLabel("title")
-        .nodeColor((node: any) => {
-          if (node.id === ROOT_ID) return "#4a4a4a";
-          if (facultyIdsRef.current.has(node.id)) {
-            const baseColor = FACULTY_COLORS[node.faculty] || "#888888";
-            return mixWithWhite(baseColor, 0.4);
-          }
-          if (missingPrereqsRef.current.has(node.id)) return "#ef4444";
-          if (!completedRef.current.has(node.id)) return GREY;
-          return FACULTY_COLORS[node.faculty] || "#888888";
-        })
-        .nodeVal((node: any) => {
-          if (node.id === ROOT_ID) return 20;
-          if (facultyIdsRef.current.has(node.id)) return 12;
-          return 4;
-        })
-        .linkColor((link: any) => {
-          const target = typeof link.target === "object" ? link.target : null;
-          if (target) {
-            const color = FACULTY_COLORS[target.faculty];
-            if (color) {
-              const r = parseInt(color.slice(1, 3), 16);
-              const g = parseInt(color.slice(3, 5), 16);
-              const b = parseInt(color.slice(5, 7), 16);
-              return `rgba(${r}, ${g}, ${b}, 0.45)`;
+      try {
+        graphRef.current = ForceGraph3DFn()(container)
+          .width(container.clientWidth)
+          .height(container.clientHeight)
+          .graphData(data)
+          .nodeLabel("title")
+          .nodeColor((node: any) => {
+            if (node.id === ROOT_ID) return "#4a4a4a";
+            if (facultyIdsRef.current.has(node.id)) {
+              const baseColor = FACULTY_COLORS[node.faculty] || "#888888";
+              return mixWithWhite(baseColor, 0.4);
             }
-          }
-          return "rgba(109, 129, 150, 0.4)";
-        })
-        .linkWidth(1.5)
-        .backgroundColor("#ffffe3")
-        .onNodeClick((node) => {
-          setSelectedNode(node as GraphNode);
-        });
+            if (missingPrereqsRef.current.has(node.id)) return "#ef4444";
+            if (!completedRef.current.has(node.id)) return GREY;
+            return FACULTY_COLORS[node.faculty] || "#888888";
+          })
+          .nodeVal((node: any) => {
+            if (node.id === ROOT_ID) return 20;
+            if (facultyIdsRef.current.has(node.id)) return 12;
+            return 4;
+          })
+          .linkColor((link: any) => {
+            const target =
+              typeof link.target === "object" ? link.target : null;
+            if (target) {
+              const color = FACULTY_COLORS[target.faculty];
+              if (color) {
+                const r = parseInt(color.slice(1, 3), 16);
+                const g = parseInt(color.slice(3, 5), 16);
+                const b = parseInt(color.slice(5, 7), 16);
+                return `rgba(${r}, ${g}, ${b}, 0.45)`;
+              }
+            }
+            return "rgba(109, 129, 150, 0.4)";
+          })
+          .linkWidth(1.5)
+          .backgroundColor("#ffffe3")
+          .onNodeClick((node) => {
+            setSelectedNode(node as GraphNode);
+          });
 
-      graphRef.current?.cameraPosition(
-        { x: 0, y: 0, z: 300 },
-        { x: 0, y: 0, z: 0 },
-        0,
-      );
+        graphRef.current?.cameraPosition(
+          { x: 0, y: 0, z: 300 },
+          { x: 0, y: 0, z: 0 },
+          0,
+        );
 
-      // Lock orbit target to root node and constrain zoom
-      const controls = graphRef.current?.controls() as any;
-      if (controls) {
-        controls.enablePan = false;
-        controls.maxDistance = 2000;
-        controls.minDistance = 50;
-      }
-
-      // Keep orbit target locked to root node origin
-      graphRef.current?.onEngineTick(() => {
+        // Lock orbit target to root node and constrain zoom
+        const controls = graphRef.current?.controls() as any;
         if (controls) {
-          controls.target.set(0, 0, 0);
+          controls.enablePan = false;
+          controls.maxDistance = 2000;
+          controls.minDistance = 50;
         }
-      });
+
+        // Keep orbit target locked to root node origin
+        graphRef.current?.onEngineTick(() => {
+          if (controls) {
+            controls.target.set(0, 0, 0);
+          }
+        });
+      } catch (err) {
+        console.error("Failed to initialize 3D graph:", err);
+        setRenderError(
+          "Your browser does not support WebGL or WebGPU, which is required for the 3D prerequisite graph. " +
+            "Try enabling hardware acceleration in your browser settings or updating your graphics drivers.",
+        );
+      }
     }
   }, [showUnlocks, userId]);
 
@@ -302,6 +312,19 @@ export default function CourseGraph() {
     observer.observe(container);
     return () => observer.disconnect();
   }, []);
+
+  if (renderError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center p-8">
+        <div className="text-center max-w-md">
+          <h2 className="font-display text-xl font-bold text-[var(--goose-ink)] mb-2">
+            3D Graph Unavailable
+          </h2>
+          <p className="text-sm text-[var(--goose-slate)]">{renderError}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-full">
