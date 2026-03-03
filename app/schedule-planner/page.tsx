@@ -44,6 +44,7 @@ export default function SchedulePlannerPage() {
   const [isSearching, setIsSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
+  const addingCoursesRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     channelRef.current = new BroadcastChannel("schedule-updates");
@@ -160,58 +161,67 @@ export default function SchedulePlannerPage() {
   }, []);
 
   const handleAddCourse = async (course: Pick<Course, "code" | "name">) => {
+    // Prevent concurrent adds of the same course (e.g. double-click)
+    if (addingCoursesRef.current.has(course.code)) return;
+
     // Check if already in any term
     const alreadyScheduled = Object.values(courses).some((list) =>
       list.some((c) => c.code === course.code)
     );
     if (alreadyScheduled) return;
 
-    if (user) {
-      const res = await fetch(`/api/users/${user.id}/schedule`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseCode: course.code, term: selectedTerm }),
-      });
-      if (!res.ok) return;
+    addingCoursesRef.current.add(course.code);
 
-      const entry = await res.json();
-      const prereqs = (entry.course?.prereqs || []).map((p: { prereqCode: string }) => p.prereqCode);
+    try {
+      if (user) {
+        const res = await fetch(`/api/users/${user.id}/schedule`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ courseCode: course.code, term: selectedTerm }),
+        });
+        if (!res.ok) return;
 
-      setCourses((prev) => ({
-        ...prev,
-        [selectedTerm]: [...prev[selectedTerm], { ...course, prereqs }],
-      }));
-    } else {
-      // Fetch course details for prereqs
-      const searchRes = await fetch(`/api/courses/search?q=${encodeURIComponent(course.code)}`);
-      let prereqs: string[] = [];
-      if (searchRes.ok) {
-        const results: { code: string; title: string; prereqs?: { prereqCode: string }[] }[] = await searchRes.json();
-        const match = results.find((r) => r.code === course.code);
-        prereqs = (match?.prereqs || []).map((p) => p.prereqCode);
+        const entry = await res.json();
+        const prereqs = (entry.course?.prereqs || []).map((p: { prereqCode: string }) => p.prereqCode);
+
+        setCourses((prev) => ({
+          ...prev,
+          [selectedTerm]: [...prev[selectedTerm], { ...course, prereqs }],
+        }));
+      } else {
+        // Fetch course details for prereqs
+        const searchRes = await fetch(`/api/courses/search?q=${encodeURIComponent(course.code)}`);
+        let prereqs: string[] = [];
+        if (searchRes.ok) {
+          const results: { code: string; title: string; prereqs?: { prereqCode: string }[] }[] = await searchRes.json();
+          const match = results.find((r) => r.code === course.code);
+          prereqs = (match?.prereqs || []).map((p) => p.prereqCode);
+        }
+
+        const schedule = getAnonSchedule();
+        schedule.entries.push({
+          courseCode: course.code,
+          term: selectedTerm,
+          course: {
+            code: course.code,
+            title: course.name,
+            prereqs: prereqs.map((p) => ({ prereqCode: p })),
+          },
+        });
+        setAnonSchedule(schedule);
+
+        setCourses((prev) => ({
+          ...prev,
+          [selectedTerm]: [...prev[selectedTerm], { ...course, prereqs }],
+        }));
       }
 
-      const schedule = getAnonSchedule();
-      schedule.entries.push({
-        courseCode: course.code,
-        term: selectedTerm,
-        course: {
-          code: course.code,
-          title: course.name,
-          prereqs: prereqs.map((p) => ({ prereqCode: p })),
-        },
-      });
-      setAnonSchedule(schedule);
-
-      setCourses((prev) => ({
-        ...prev,
-        [selectedTerm]: [...prev[selectedTerm], { ...course, prereqs }],
-      }));
+      setSearchQuery("");
+      setSearchResults([]);
+      notifyChange();
+    } finally {
+      addingCoursesRef.current.delete(course.code);
     }
-
-    setSearchQuery("");
-    setSearchResults([]);
-    notifyChange();
   };
 
   const handleMoveCourse = async (courseCode: string, targetTerm: string) => {

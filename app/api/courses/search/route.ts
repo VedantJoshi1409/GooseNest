@@ -15,6 +15,9 @@ export async function GET(request: NextRequest) {
         { title: { contains: q, mode: "insensitive" } },
       ],
     },
+    include: {
+      prereqs: { select: { prereqCode: true } },
+    },
     orderBy: { code: "asc" },
     take: 20,
   });
